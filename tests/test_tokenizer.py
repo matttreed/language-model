@@ -371,25 +371,25 @@ def test_encode_iterable_tinystories_sample_roundtrip():
     assert tokenizer.decode(all_ids) == corpus_contents
 
 
-# def test_encode_iterable_tinystories_matches_tiktoken():
-#     reference_tokenizer = tiktoken.get_encoding("gpt2")
-#     tokenizer = get_tokenizer_from_vocab_merges_path(
-#         vocab_path=VOCAB_PATH, merges_path=MERGES_PATH, special_tokens=["<|endoftext|>"]
-#     )
-#     corpus_path = FIXTURES_PATH / "tinystories_sample.txt"
-#     with open(corpus_path) as f:
-#         corpus_contents = f.read()
-#     reference_ids = reference_tokenizer.encode(
-#         corpus_contents, allowed_special={"<|endoftext|>"}
-#     )
-#     all_ids = []
-#     with open(FIXTURES_PATH / "tinystories_sample.txt") as f:
-#         for _id in tokenizer.encode_iterable(f):
-#             all_ids.append(_id)
-#     assert all_ids == reference_ids
+def test_encode_iterable_tinystories_matches_tiktoken():
+    reference_tokenizer = tiktoken.get_encoding("gpt2")
+    tokenizer = get_tokenizer_from_vocab_merges_path(
+        vocab_path=VOCAB_PATH, merges_path=MERGES_PATH, special_tokens=["<|endoftext|>"]
+    )
+    corpus_path = FIXTURES_PATH / "tinystories_sample.txt"
+    with open(corpus_path) as f:
+        corpus_contents = f.read()
+    reference_ids = reference_tokenizer.encode(
+        corpus_contents, allowed_special={"<|endoftext|>"}
+    )
+    all_ids = []
+    with open(FIXTURES_PATH / "tinystories_sample.txt") as f:
+        for _id in tokenizer.encode_iterable(f):
+            all_ids.append(_id)
+    assert all_ids == reference_ids
 
-#     assert tokenizer.decode(all_ids) == corpus_contents
-#     assert reference_tokenizer.decode(reference_ids) == corpus_contents
+    assert tokenizer.decode(all_ids) == corpus_contents
+    assert reference_tokenizer.decode(reference_ids) == corpus_contents
 
 
 @pytest.mark.skipif(

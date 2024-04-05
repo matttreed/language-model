@@ -55,8 +55,14 @@ class BPETokenizer(Tokenizer):
         self.reverse_vocab = {v: k for k, v in self.params.vocab.items()} # find some way to do "is prefix"
         self.max_len_token = max([len(word) for word in self.params.vocab.values()]) # 128 
 
+    @classmethod
     def from_files(cls, vocab_filepath, merges_filepath, special_tokens=None):
-        pass
+        with open(vocab_filepath, 'r') as file:
+            vocab = {int(k): v.encode("utf-8") for k, v in json.load(file).items()}
+        with open(merges_filepath, 'r') as file:
+            merges = [tuple(vocab[int(b)] for b in line.rstrip().split(" ")) for line in file]
+        params = BPETokenizerParams(vocab, merges)
+        cls(params, special_tokens)
     # Construct and
         # return a Tokenizer from a serialized vocabulary and list of merges (in the same format that your
         # BPE training code output) and (optionally) a list of special tokens. This method should accept
@@ -66,7 +72,9 @@ class BPETokenizer(Tokenizer):
         # special_tokens: list[str] | None = None
 
     def encode_iterable(self, iterable: Iterable[str]) -> Iterator[int]:
-        return []
+        for text in iterable:
+            for token_id in self.encode(text):
+                yield token_id
         # Given an iterable of
         # strings (e.g., a Python file handle), return a generator that lazily yields token IDs. This is required
         # for memory-efficient tokenization of large files that we cannot directly load into memory.
@@ -112,44 +120,6 @@ class BPETokenizer(Tokenizer):
         text = b''.join(bytes_list).decode("utf-8", errors="replace") # join bytes into one string then decode
         return text
 
-
-# def train_bpe_ekrglekrm(input_path: str, vocab_size: int, special_tokens: list[str])-> BPETokenizerParams:
-#     # note("Start with the list of bytes of `text`.")
-#     with open(input_path, 'r') as file:
-#         text = file.read()
-#         # pretokenized_text = re.findall(PAT, text)
-#     indices = list(map(int, text.encode("utf-8")))
-
-#     # index1, index2 => merged index
-#     merges: Dict[Tuple[int, int], int] = {}
-
-#     # index -> bytes
-#     vocab: Dict[int, bytes] = {
-#         x: bytes([x]) for x in range(256)
-#     }
-
-#     for i in range(vocab_size):
-#         # note("Count the number of occurrences of each pair of tokens")
-#         counts = defaultdict(int)
-#         for pair in zip(indices, indices[1:]):  # For each adjacent pair
-#             counts[pair] += 1
-
-#         if not counts:
-#             break
-#         # note("Find the most common pair.")
-#         pair = max(counts, key=lambda pair: (counts[pair], pair[::-1]))
-
-#         # note("Merge that pair.")
-#         new_index = 256 + i
-#         merges[pair] = new_index
-#         vocab[new_index] = vocab[pair[0]] + vocab[pair[1]]
-
-#         # note(f"Merge {vocab[pair[0]]} {vocab[pair[1]]} -> {vocab[new_index]}")
-#         indices = merge(indices, pair, new_index)
-
-#         # note(f"Text: {list(map(vocab.get, indices))}")
-
-#     return BPETokenizerParams(vocab=vocab, merges=merges)
 
 
 def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (Dict[int, bytes], List[Tuple[bytes, bytes]]):
