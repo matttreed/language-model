@@ -105,18 +105,12 @@ class BPETokenizer(Tokenizer):
 
 
 def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (Dict[int, bytes], List[Tuple[bytes, bytes]]):
-    # vocab = {i: token.encode("utf-8") for i, token in enumerate(special_tokens)}
-    # for i in range(NUM_START_TOKENS):
-    #     vocab[i+len(special_tokens)] = bytes([i])
-
         
-    special_tokens_reverse_map = {}
+    merges: Dict[Tuple[int, int], int] = {}
     vocab: Dict[int, bytes] = {i: bytes([i]) for i in range(NUM_START_TOKENS)}
     for i, token in enumerate(special_tokens, NUM_START_TOKENS):
         vocab[i] = token.encode("utf-8")
-        special_tokens_reverse_map[token] = i
-        
-    merges: Dict[Tuple[int, int], int] = {}
+
 
 
     with open(input_path, 'r') as file:
@@ -126,9 +120,11 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
 
     token_counts = defaultdict(int)
     for token in pretokenized_text:
-        if token in special_tokens:
-            token_counts[special_tokens_reverse_map[token]] += 1
-            continue
+        # for special_token in special_tokens:
+            # if special_token in token and token not in special_tokens:
+            #     print(token)
+            # token_counts[NUM_START_TOKENS + i] += 1
+            # continue
         token_ints = tuple(token.encode("utf-8"))
         token_counts[token_ints] += 1
 
@@ -143,12 +139,16 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
         if not pairs:
             break
 
-        best_pair = max(pairs, key=lambda pair: (pairs[pair], pair[::-1])) # (int, int)
+        def sort_function(pair):
+            return pairs[pair], str(vocab[pair[0]]) + str(vocab[pair[1]])
+        best_pair = max(pairs, key=sort_function) # (int, int)
+        # sorted_pairs_1 = sorted(pairs.items(), key=lambda x: (pairs[x], x), reverse=True)
+        # sorted_pairs = sorted(pairs.items(), key=sort_function, reverse=True)
+
         del pairs[best_pair]
         new_token_value = len(vocab)
         merges[best_pair] = new_token_value
         vocab[new_token_value] = vocab[best_pair[0]] + vocab[best_pair[1]]
-
 
         for old_token in list(token_counts.keys()):
             i = 0
@@ -180,9 +180,6 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
 
                 i += 1
 
-
-
-
     return BPETokenizerParams(vocab=vocab, merges=merges)
 
 if __name__ == "__main__":
@@ -193,4 +190,4 @@ if __name__ == "__main__":
     merges = [tuple(vocab[b] for b in pair) for pair in result.merges.keys()]
 
     # print(vocab)
-    print(merges[92:100])
+    # print(merges[92:100])
