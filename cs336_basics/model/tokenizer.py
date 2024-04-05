@@ -72,34 +72,31 @@ class BPETokenizer(Tokenizer):
         # for memory-efficient tokenization of large files that we cannot directly load into memory.
 
     def encode(self, text: str) -> List[int]:
-        inds = []
-        # pretokenized_text = re.findall(PAT, text)
-        # for special_tok in self.special_tokens:
         split_text = [text]
-        if self.special_tokens:
-            special_split = r"(" + r"|".join(re.escape(tok) for tok in sorted(self.special_tokens, reverse=True)) + r")"
+        if self.special_tokens: # split by special tokens first
+            special_split = r"(" + r"|".join(re.escape(tok) for tok in sorted(self.special_tokens, reverse=True)) + r")" #+  PAT
             split_text: List[str] = [string for string in re.split(special_split, text) if len(string)] # get rid of empty strings
-        pretokenized_text: List[List[bytes]] = []
-        # ignore_special_ids = set()
+
+        pretokenized_text: List[List[bytes]] = [] # list of list of bytes. inner lists are mostly just individual bytes except special tokens which are already fully formed
+
         for t in split_text:
             if self.special_tokens and t in self.special_tokens:
-                # ignore_special_ids.add(len(pretokenized_text))
                 pretokenized_text.append([self.reverse_vocab[t.encode("utf-8")]])
             else:
                 list_of_bytes: List[bytes] = [string.encode("utf-8") for string in re.findall(PAT, t)]
                 list_of_list_of_bytes: List[List[bytes]]= [[self.reverse_vocab[bytes([b])] for b in bs] for bs in list_of_bytes]
                 pretokenized_text += list_of_list_of_bytes
 
+        inds: List[int] = [] # token numbers
+
         for i, token in enumerate(pretokenized_text):
-            # print(token)
             merges_to_perform = {} # index to order
-            # if i not in ignore_special_ids:
             while True: # merging
-                for i in range(len(token) - 1):
+                for i in range(len(token) - 1): # find all merges
                     curr_merge =(token[i], token[i+1])
                     if curr_merge in self.params.merges:
                         merges_to_perform[i] = self.params.merges[curr_merge]
-                if merges_to_perform:
+                if merges_to_perform: # do first merge that appears in merges
                     best_merge_index = min(merges_to_perform, key=lambda x: merges_to_perform[x])
                     token[best_merge_index] = self.params.merges[token[best_merge_index], token[best_merge_index+1]]
                     token.pop(best_merge_index+1)
@@ -107,39 +104,12 @@ class BPETokenizer(Tokenizer):
                 else:
                     break
             inds += token
-            print(inds)
-            # i = 0
-            # merging token
-            # while i < len(token):
-            #     if i + 1 < len(token) and (token[i], token[i+1]) in self.params.merges:
-            #         token[i] = self.params.merges[(token[i], token[i+1])]
-            #         token.erase(i+1, 1)
-            #         i = max(0, i-1)
-            #     else:
-            #         i += 1
-
-            # # tokenizing
-            # start = 0
-            # end = min(len(token), self.max_len_token)
-            # while start < end:
-            #     while token[start: end] not in self.reverse_vocab:
-            #         end -= 1
-            #     inds.append(self.reverse_vocab[token[start: end]])
-            #     start = end
-            #     end = len(token)
-        print(inds)
-
+   
         return inds
 
     def decode(self, indices: List[int]) -> str:
-        # print(self.params.vocab[indices[0]], indices)
-        bytes_list = [self.params.vocab[i] for i in indices]
-        text = b''.join(bytes_list).decode("utf-8", errors="replace")
-        # for i, s in self.params.vocab.items():
-        #     if s == b"s":
-        #         print(i)
-        # print(self.params.vocab[115])
-        # print(list("s".encode("utf-8")))
+        bytes_list: List[bytes] = [self.params.vocab[i] for i in indices] # list of every index converted to bytes
+        text = b''.join(bytes_list).decode("utf-8", errors="replace") # join bytes into one string then decode
         return text
 
 
