@@ -1,6 +1,6 @@
 import regex as re
 from collections import defaultdict
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Iterable, Iterator
 from dataclasses import dataclass
 from abc import ABC
 
@@ -49,19 +49,97 @@ class Tokenizer(ABC):
 
 class BPETokenizer(Tokenizer):
     """BPE tokenizer given a set of merges and a vocabulary."""
-    def __init__(self, params: BPETokenizerParams):
+    def __init__(self, params: BPETokenizerParams, special_tokens=None):
         self.params = params
+        self.special_tokens = special_tokens
+        self.reverse_vocab = {v: k for k, v in self.params.vocab.items()} # find some way to do "is prefix"
+        self.max_len_token = max([len(word) for word in self.params.vocab.values()]) # 128 
+
+    def from_files(cls, vocab_filepath, merges_filepath, special_tokens=None):
+        pass
+    # Construct and
+        # return a Tokenizer from a serialized vocabulary and list of merges (in the same format that your
+        # BPE training code output) and (optionally) a list of special tokens. This method should accept
+        # the following additional parameters:
+        # vocab_filepath: str
+        # merges_filepath: str
+        # special_tokens: list[str] | None = None
+
+    def encode_iterable(self, iterable: Iterable[str]) -> Iterator[int]:
+        return []
+        # Given an iterable of
+        # strings (e.g., a Python file handle), return a generator that lazily yields token IDs. This is required
+        # for memory-efficient tokenization of large files that we cannot directly load into memory.
 
     def encode(self, text: str) -> List[int]:
-        indices = list(map(int, text.encode("utf-8")))
-        # Note: this is a very slow implementation
-        for pair, new_index in self.params.merges.items():
-            indices = merge(indices, pair, new_index)
-        return indices
+        inds = []
+        # pretokenized_text = re.findall(PAT, text)
+        # for special_tok in self.special_tokens:
+        split_text = [text]
+        if self.special_tokens:
+            special_split = r"(" + r"|".join(re.escape(tok) for tok in sorted(self.special_tokens, reverse=True)) + r")"
+            split_text: List[str] = [string for string in re.split(special_split, text) if len(string)] # get rid of empty strings
+        pretokenized_text: List[List[bytes]] = []
+        # ignore_special_ids = set()
+        for t in split_text:
+            if self.special_tokens and t in self.special_tokens:
+                # ignore_special_ids.add(len(pretokenized_text))
+                pretokenized_text.append([self.reverse_vocab[t.encode("utf-8")]])
+            else:
+                list_of_bytes: List[bytes] = [string.encode("utf-8") for string in re.findall(PAT, t)]
+                list_of_list_of_bytes: List[List[bytes]]= [[self.reverse_vocab[bytes([b])] for b in bs] for bs in list_of_bytes]
+                pretokenized_text += list_of_list_of_bytes
+
+        for i, token in enumerate(pretokenized_text):
+            # print(token)
+            merges_to_perform = {} # index to order
+            # if i not in ignore_special_ids:
+            while True: # merging
+                for i in range(len(token) - 1):
+                    curr_merge =(token[i], token[i+1])
+                    if curr_merge in self.params.merges:
+                        merges_to_perform[i] = self.params.merges[curr_merge]
+                if merges_to_perform:
+                    best_merge_index = min(merges_to_perform, key=lambda x: merges_to_perform[x])
+                    token[best_merge_index] = self.params.merges[token[best_merge_index], token[best_merge_index+1]]
+                    token.pop(best_merge_index+1)
+                    merges_to_perform.clear()
+                else:
+                    break
+            inds += token
+            print(inds)
+            # i = 0
+            # merging token
+            # while i < len(token):
+            #     if i + 1 < len(token) and (token[i], token[i+1]) in self.params.merges:
+            #         token[i] = self.params.merges[(token[i], token[i+1])]
+            #         token.erase(i+1, 1)
+            #         i = max(0, i-1)
+            #     else:
+            #         i += 1
+
+            # # tokenizing
+            # start = 0
+            # end = min(len(token), self.max_len_token)
+            # while start < end:
+            #     while token[start: end] not in self.reverse_vocab:
+            #         end -= 1
+            #     inds.append(self.reverse_vocab[token[start: end]])
+            #     start = end
+            #     end = len(token)
+        print(inds)
+
+        return inds
 
     def decode(self, indices: List[int]) -> str:
-        bytes_list = list(map(self.params.vocab.get, indices))
-        text = b"".join(bytes_list).decode("utf-8")
+        # print(self.params.vocab[indices[0]], indices)
+        bytes_list = [self.params.vocab[i] for i in indices]
+        text = b''.join(bytes_list).decode("utf-8", errors="replace")
+        # for i, s in self.params.vocab.items():
+        #     if s == b"s":
+        #         print(i)
+        # print(self.params.vocab[115])
+        # print(list("s".encode("utf-8")))
         return text
 
 
@@ -189,5 +267,10 @@ if __name__ == "__main__":
     vocab = result.vocab
     merges = [tuple(vocab[b] for b in pair) for pair in result.merges.keys()]
 
-    # print(vocab)
+    tokenizer = BPETokenizer(params=result, special_tokens=["<|endoftext|>"])
+    test = tokenizer.encode("s")
+    test_2 = tokenizer.decode(test)
+    print(test, test_2)
+
+    print(vocab)
     # print(merges[92:100])
