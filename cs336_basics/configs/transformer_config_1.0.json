@@ -13,5 +13,6 @@
     "dataset": {
         "max_seq_length": 512,
         "vocab_size": 32000
-    }
+    },
+    "random_seed": 42
 }

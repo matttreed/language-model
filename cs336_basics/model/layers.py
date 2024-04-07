@@ -1,0 +1,73 @@
+import torch
+import torch.nn as nn
+
+class RMSNorm(nn.Module):
+    def __init__(self, d_model, eps=1e-5):
+        super(RMSNorm, self).__init__()
+        self.d_model = d_model
+        self.eps = eps
+        self.weight = nn.Parameter(torch.ones(d_model)) # gain
+
+    def forward(self, x):
+        return x / torch.sqrt(torch.mean(x**2, dim=-1, keepdim=True) + self.eps) * self.weight
+    
+class GELU(nn.Module):
+    def forward(self, x):
+        return 0.5 * x * (1 + torch.erf(x / torch.sqrt(torch.tensor(2.0))))
+
+class PositionWiseFeedForward(nn.Module):
+    def __init__(self, d_model, d_ff):
+        super(PositionWiseFeedForward, self).__init__()
+        self.d_model = d_model
+        self.d_ff = d_ff
+        self.w1 = nn.Linear(d_model, d_ff, bias=False)
+        self.w2 = nn.Linear(d_ff, d_model, bias=False)
+        self.gelu = GELU()
+
+    def forward(self, x):
+        x = self.gelu(self.w1(x))
+        x = self.w2(x)
+        return x
+    
+def scaledDotProductAttention(q, k, v, mask=None, pdropout=0):
+    # k, q of shape (batch_size, ..., seq_len, d_k)
+    # v of shape (batch_size, ..., seq_len, d_v)
+    d_k = q.size(-1)
+    scores = (q @ k.transpose(-1,-2)) / d_k**0.5 # shape (batch_size, ..., seq_len, seq_len)
+    if mask is not None:
+        scores = scores.masked_fill(~mask, -1e9) # fill with -inf whereever mask is False
+    attention = torch.nn.functional.softmax(scores, dim=-1) # shape (batch_size, ..., seq_len, seq_len)
+    attention = torch.nn.functional.dropout(attention, pdropout)
+    output = attention @ v # shape (batch_size, ..., seq_len, d_v)
+    return output
+
+class MultiHeadAttention(nn.Module):
+    def __init__(self, d_model, num_heads, attn_pdrop=0):
+        super(MultiHeadAttention, self).__init__()
+        # assert d_model % num_heads == 0
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.d_v = d_model // num_heads
+        self.d_k = self.d_v
+
+        self.W_q = nn.Parameter(torch.randn(self.num_heads, self.d_model, self.d_k)) # TODO initialize properly
+        self.W_k = nn.Parameter(torch.randn(self.num_heads, self.d_model, self.d_k)) # TODO init random seed
+        self.W_v = nn.Parameter(torch.randn(self.num_heads, self.d_model, self.d_v))
+        self.W_o = nn.Parameter(torch.randn(num_heads * self.d_v, self.d_model))
+        self.attn_pdrop = attn_pdrop
+
+    def forward(self, x):
+        # x of shape (batch_size, seq_len, d_model)
+        batch_size = x.size(0)
+        seq_len = x.size(1)
+        x = x.unsqueeze(1) # should be size (batch_size, 1, seq_len, d_model)
+        q = x @ self.W_q # should be size (batch_size, num_heads, seq_len, d_k)
+        k = x @ self.W_k # these are not broadcasting the way i want
+        v = x @ self.W_v
+        mask = torch.triu(torch.ones(seq_len, seq_len)).bool() # TODO make a buffer
+        x = scaledDotProductAttention(q, k, v, mask, self.attn_pdrop) # shape (batch_size, num_heads, seq_len, d_v)
+        x = x.transpose(1, 2) # shape (batch_size,seq_len, num_heads, d_v)
+        x = x.reshape(batch_size, seq_len, self.num_heads * self.d_v)
+        x = x @ self.W_o
+        return x
+

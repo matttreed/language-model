@@ -8,6 +8,7 @@ import numpy.typing as npt
 import torch
 
 from cs336_basics.model.tokenizer import train_bpe, BPETokenizer, BPETokenizerParams
+from cs336_basics.model.layers import RMSNorm, GELU, PositionWiseFeedForward, scaledDotProductAttention, MultiHeadAttention
 
 
 def run_positionwise_feedforward(
@@ -45,7 +46,9 @@ def run_positionwise_feedforward(
     # You can also manually assign the weights
     # my_ffn.w1.weight.data = weights["w1.weight"]
     # my_ffn.w2.weight.data = weights["w2.weight"]
-    raise NotImplementedError
+    layer = PositionWiseFeedForward(d_model, d_ff)
+    layer.load_state_dict(weights)
+    return layer(in_features)
 
 
 def run_scaled_dot_product_attention(
@@ -87,7 +90,7 @@ def run_scaled_dot_product_attention(
         with the output of running your scaled dot product attention
         implementation with the provided key, query, and value tensors.
     """
-    raise NotImplementedError
+    return scaledDotProductAttention(Q, K, V, ~mask, pdrop)
 
 
 def run_multihead_self_attention(
@@ -137,7 +140,15 @@ def run_multihead_self_attention(
         torch.FloatTensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    layer = MultiHeadAttention(d_model, num_heads, attn_pdrop)
+    for i in range(num_heads):
+        layer.W_q.data[i] = weights[f"q_heads.{i}.weight"].T
+        layer.W_k.data[i] = weights[f"k_heads.{i}.weight"].T
+        layer.W_v.data[i] = weights[f"v_heads.{i}.weight"].T
+
+    layer.W_o.data = weights["output_proj.weight"].T
+
+    return layer(in_features)
 
 
 def run_transformer_block(
@@ -321,7 +332,10 @@ def run_rmsnorm(
         FloatTensor of with the same shape as `in_features` with the output of running
         layernorm of the `in_features`.
     """
-    raise NotImplementedError
+    layer = RMSNorm(d_model, eps)
+    layer.load_state_dict(weights)
+    output = layer(in_features)
+    return output
 
 
 def run_gelu(in_features: torch.FloatTensor) -> torch.FloatTensor:
@@ -336,7 +350,8 @@ def run_gelu(in_features: torch.FloatTensor) -> torch.FloatTensor:
         FloatTensor of with the same shape as `in_features` with the output of applying
         GELU to each element.
     """
-    raise NotImplementedError
+    gelu = GELU()
+    return gelu(in_features)
 
 
 def run_get_batch(
