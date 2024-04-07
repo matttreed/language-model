@@ -35,7 +35,7 @@ def scaledDotProductAttention(q, k, v, mask=None, pdropout=0):
     d_k = q.size(-1)
     scores = (q @ k.transpose(-1,-2)) / d_k**0.5 # shape (batch_size, ..., seq_len, seq_len)
     if mask is not None:
-        scores = scores.masked_fill(~mask, -1e9) # fill with -inf whereever mask is False
+        scores = scores.masked_fill(~mask, -1e15) # fill with -inf whereever mask is False
     attention = torch.nn.functional.softmax(scores, dim=-1) # shape (batch_size, ..., seq_len, seq_len)
     attention = torch.nn.functional.dropout(attention, pdropout)
     output = attention @ v # shape (batch_size, ..., seq_len, d_v)
@@ -44,7 +44,7 @@ def scaledDotProductAttention(q, k, v, mask=None, pdropout=0):
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads, attn_pdrop=0):
         super(MultiHeadAttention, self).__init__()
-        # assert d_model % num_heads == 0
+        assert d_model % num_heads == 0
         self.d_model = d_model
         self.num_heads = num_heads
         self.d_v = d_model // num_heads
@@ -64,7 +64,7 @@ class MultiHeadAttention(nn.Module):
         q = x @ self.W_q # should be size (batch_size, num_heads, seq_len, d_k)
         k = x @ self.W_k # these are not broadcasting the way i want
         v = x @ self.W_v
-        mask = torch.triu(torch.ones(seq_len, seq_len)).bool() # TODO make a buffer
+        mask = ~torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool() # TODO make a buffer
         x = scaledDotProductAttention(q, k, v, mask, self.attn_pdrop) # shape (batch_size, num_heads, seq_len, d_v)
         x = x.transpose(1, 2) # shape (batch_size,seq_len, num_heads, d_v)
         x = x.reshape(batch_size, seq_len, self.num_heads * self.d_v)
