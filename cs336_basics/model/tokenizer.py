@@ -3,6 +3,8 @@ from collections import defaultdict
 from typing import List, Tuple, Dict, Iterable, Iterator
 from dataclasses import dataclass
 from abc import ABC
+import json
+import base64
 
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 NUM_START_TOKENS = 256
@@ -20,31 +22,6 @@ class Tokenizer(ABC):
 
     def decode(self, indices: List[int]) -> str:
         raise NotImplementedError
-    
-
-
-# class CharacterTokenizer(Tokenizer):
-#     """Represent a text as a sequence of Unicode code points."""
-#     def encode(self, text: str) -> List[int]:
-#         return list(map(ord, text))
-
-#     def decode(self, indices: List[int]) -> str:
-#         return "".join(map(chr, indices))
-
-
-# def merge(indices: Tuple[int], pair: Tuple[(int, int)], new_index: int) -> Tuple[int]:
-#     """Return `indices`, but with all instances of `pair` replaced with `new_index`."""
-#     new_indices = []
-#     i = 0
-#     while i < len(indices):
-#         if i + 1 < len(indices) and indices[i] == pair[0] and indices[i + 1] == pair[1]:
-#             new_indices.append(new_index)
-#             i += 2
-#         else:
-#             new_indices.append(indices[i])
-#             i += 1
-#     return new_indices
-
 
 
 class BPETokenizer(Tokenizer):
@@ -58,18 +35,14 @@ class BPETokenizer(Tokenizer):
     @classmethod
     def from_files(cls, vocab_filepath, merges_filepath, special_tokens=None):
         with open(vocab_filepath, 'r') as file:
-            vocab = {int(k): v.encode("utf-8") for k, v in json.load(file).items()}
+            vocab = {int(num): b.encode('utf-8') for b, num in json.load(file).items()}
         with open(merges_filepath, 'r') as file:
-            merges = [tuple(vocab[int(b)] for b in line.rstrip().split(" ")) for line in file]
+            merges: Dict[Tuple[int, int], int] = {}
+            for line in file:
+                merge = line.rstrip().split(" ")
+                merges[(int(merge[0]), int(merge[1]))] = int(merge[2])
         params = BPETokenizerParams(vocab, merges)
-        cls(params, special_tokens)
-    # Construct and
-        # return a Tokenizer from a serialized vocabulary and list of merges (in the same format that your
-        # BPE training code output) and (optionally) a list of special tokens. This method should accept
-        # the following additional parameters:
-        # vocab_filepath: str
-        # merges_filepath: str
-        # special_tokens: list[str] | None = None
+        return cls(params, special_tokens)
 
     def encode_iterable(self, iterable: Iterable[str]) -> Iterator[int]:
         for text in iterable:
@@ -130,12 +103,13 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
         vocab[i] = token.encode("utf-8")
 
 
-
+    print("Reading file")
     with open(input_path, 'r') as file:
         text = file.read()
+        print("Pretokenizing Text")
         pretokenized_text = re.findall(PAT, text)
 
-
+    print("Counting tokens")
     token_counts = defaultdict(int)
     for token in pretokenized_text:
         # for special_token in special_tokens:
@@ -146,13 +120,16 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
         token_ints = tuple(token.encode("utf-8"))
         token_counts[token_ints] += 1
 
+    print("Counting pairs")
     pairs = defaultdict(int)
     for token, count in token_counts.items():
         for i in range(len(token) - 1):
             pair = token[i:i+2]
             pairs[pair] += count
 
+    print("Building Vocab")
     while len(vocab) < vocab_size:
+        print(len(vocab))
 
         if not pairs:
             break
@@ -200,17 +177,44 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
 
     return BPETokenizerParams(vocab=vocab, merges=merges)
 
+
+# if __name__ == "__main__":
+#     # vocab, merges = train_bpe("data/test.txt", 300, ["<|endoftext|>"])
+#     result = train_bpe("tests/fixtures/corpus.en", 500, ["<|endoftext|>"])
+#     # result = train_bpe("data/test.txt", 400, ["<|endoftext|>"])
+#     vocab = result.vocab
+#     merges = [tuple(vocab[b] for b in pair) for pair in result.merges.keys()]
+
+#     tokenizer = BPETokenizer(params=result, special_tokens=["<|endoftext|>"])
+#     test = tokenizer.encode("s")
+#     test_2 = tokenizer.decode(test)
+#     print(test, test_2)
+
+#     print(vocab)
+#     # print(merges[92:100])
+def save_bpe_params(params: BPETokenizerParams, vocab_filepath: str, merges_filepath: str):
+    with open(vocab_filepath, 'w') as file:
+        json.dump({b.decode('utf-8', errors="backslashreplace"): num for num, b in params.vocab.items()}, file)
+    with open(merges_filepath, 'w') as file:
+        for pair, new_index in params.merges.items():
+            file.write(f"{pair[0]} {pair[1]} {new_index}\n")
+
+def train_tokenizer_from_data():
+    # data_path = "data/TinyStoriesV2-GPT4-train.txt"
+    data_path = "data/test.txt"
+    vocab_filepath="cs336_basics/outputs/tiny_stories_vocab.json"
+    merges_filepath="cs336_basics/outputs/tiny_stories_merges.txt"
+
+    result = train_bpe(data_path, 400, ["<|endoftext|>"])
+    save_bpe_params(result, vocab_filepath, merges_filepath)
+
 if __name__ == "__main__":
-    # vocab, merges = train_bpe("data/test.txt", 300, ["<|endoftext|>"])
-    result = train_bpe("tests/fixtures/corpus.en", 500, ["<|endoftext|>"])
-    # result = train_bpe("data/test.txt", 400, ["<|endoftext|>"])
-    vocab = result.vocab
-    merges = [tuple(vocab[b] for b in pair) for pair in result.merges.keys()]
-
-    tokenizer = BPETokenizer(params=result, special_tokens=["<|endoftext|>"])
-    test = tokenizer.encode("s")
-    test_2 = tokenizer.decode(test)
-    print(test, test_2)
-
-    print(vocab)
-    # print(merges[92:100])
+    train_tokenizer_from_data()
+    tokenizer = BPETokenizer.from_files("cs336_basics/outputs/tiny_stories_vocab.json", "cs336_basics/outputs/tiny_stories_merges.txt")
+    # print(tokenizer.params)
+    test = "lowlow lowlow lowlow lowlow@#$ oioi2n34 \drgnoi $$$ 2 3 lowlow below the very best woah woah hey hey there"
+    encoded = tokenizer.encode(test)
+    decoded = tokenizer.decode(encoded)
+    print(encoded)
+    print(decoded)
+    print(test == decoded)

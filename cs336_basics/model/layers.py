@@ -60,9 +60,9 @@ class MultiHeadAttention(nn.Module):
         # x of shape (batch_size, seq_len, d_model)
         batch_size = x.size(0)
         seq_len = x.size(1)
-        x = x.unsqueeze(1) # should be size (batch_size, 1, seq_len, d_model)
-        q = x @ self.W_q # should be size (batch_size, num_heads, seq_len, d_k)
-        k = x @ self.W_k # these are not broadcasting the way i want
+        x = x.unsqueeze(1) # (batch_size, 1, seq_len, d_model)
+        q = x @ self.W_q # (batch_size, num_heads, seq_len, d_k)
+        k = x @ self.W_k
         v = x @ self.W_v
         mask = ~torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool() # TODO make a buffer
         x = scaledDotProductAttention(q, k, v, mask, self.attn_pdrop) # shape (batch_size, num_heads, seq_len, d_v)
@@ -71,3 +71,25 @@ class MultiHeadAttention(nn.Module):
         x = x @ self.W_o
         return x
 
+
+class TransformerBlock(nn.Module):
+    def __init__(self, d_model, num_heads, d_ff, residual_pdrop=0, attn_pdrop=0):
+        super(TransformerBlock, self).__init__()
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.d_ff = d_ff
+        self.residual_pdrop = residual_pdrop
+        self.attn_pdrop = attn_pdrop
+
+        self.rms_norm_1 = RMSNorm(d_model)
+        self.multi_head_attention = MultiHeadAttention(d_model, num_heads, attn_pdrop)
+        self.rms_norm_2 = RMSNorm(d_model)
+        self.feed_forward = PositionWiseFeedForward(d_model, d_ff)
+
+    def forward(self, x):
+        # x of shape (batch_size, seq_len, d_model)
+        x = x + torch.nn.functional.dropout(self.multi_head_attention(self.rms_norm_1(x)), self.residual_pdrop)
+        # x = x + self.multi_head_attention(x_norm)
+        x = x + torch.nn.functional.dropout(self.feed_forward(self.rms_norm_2(x)), self.residual_pdrop)
+
+        return x
