@@ -5,6 +5,11 @@ from dataclasses import dataclass
 from abc import ABC
 import json
 import base64
+# from tqdm import tqdm
+import time
+from memory_profiler import memory_usage
+import psutil
+import os
 
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 NUM_START_TOKENS = 256
@@ -106,17 +111,15 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
     print("Reading file")
     with open(input_path, 'r') as file:
         text = file.read()
-        print("Pretokenizing Text")
-        pretokenized_text = re.findall(PAT, text)
+    # print("removing special tokens")
+    # for 
+    # text.replace()
+    print("Pretokenizing Text")
+    pretokenized_text = re.findall(PAT, text)
 
     print("Counting tokens")
     token_counts = defaultdict(int)
     for token in pretokenized_text:
-        # for special_token in special_tokens:
-            # if special_token in token and token not in special_tokens:
-            #     print(token)
-            # token_counts[NUM_START_TOKENS + i] += 1
-            # continue
         token_ints = tuple(token.encode("utf-8"))
         token_counts[token_ints] += 1
 
@@ -129,7 +132,8 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
 
     print("Building Vocab")
     while len(vocab) < vocab_size:
-        print(len(vocab))
+        if len(vocab) % 100 == 0:
+            print("Length of vocab: ", len(vocab))
 
         if not pairs:
             break
@@ -201,20 +205,30 @@ def save_bpe_params(params: BPETokenizerParams, vocab_filepath: str, merges_file
 
 def train_tokenizer_from_data():
     # data_path = "data/TinyStoriesV2-GPT4-train.txt"
-    data_path = "data/test.txt"
-    vocab_filepath="cs336_basics/outputs/tiny_stories_vocab.json"
-    merges_filepath="cs336_basics/outputs/tiny_stories_merges.txt"
+    # vocab_filepath="cs336_basics/outputs/tiny_stories_vocab.json"
+    # merges_filepath="cs336_basics/outputs/tiny_stories_merges.txt"
+    data_path = "data/owt_train.txt"
+    vocab_filepath="cs336_basics/outputs/owt_vocab.json"
+    merges_filepath="cs336_basics/outputs/owt_merges.txt"
 
-    result = train_bpe(data_path, 400, ["<|endoftext|>"])
+    result = train_bpe(data_path, 32000, ["<|endoftext|>"])
     save_bpe_params(result, vocab_filepath, merges_filepath)
 
 if __name__ == "__main__":
+    start_time = time.time()
+    process = psutil.Process(os.getpid())
+    initial_memory = process.memory_info().rss / (1024 * 1024)
+
     train_tokenizer_from_data()
-    tokenizer = BPETokenizer.from_files("cs336_basics/outputs/tiny_stories_vocab.json", "cs336_basics/outputs/tiny_stories_merges.txt")
-    # print(tokenizer.params)
-    test = "lowlow lowlow lowlow lowlow@#$ oioi2n34 \drgnoi $$$ 2 3 lowlow below the very best woah woah hey hey there"
-    encoded = tokenizer.encode(test)
-    decoded = tokenizer.decode(encoded)
-    print(encoded)
-    print(decoded)
-    print(test == decoded)
+
+    end_time = time.time()
+    final_memory = process.memory_info().rss / (1024 * 1024)
+
+    time_taken = end_time - start_time
+    memory = final_memory - initial_memory
+
+    print("time_taken: ", time_taken)
+    print("max_memory (MB): ", memory)
+
+    # time_taken:  522.8188726902008
+    # max_memory (MB):  47.75
