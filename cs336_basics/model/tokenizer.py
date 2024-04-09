@@ -13,6 +13,7 @@ import os
 
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 NUM_START_TOKENS = 256
+CHUNK_SIZE = 1000 * 1024 * 1024  # 1 GB
 
 @dataclass(frozen=True)
 class BPETokenizerParams:
@@ -108,14 +109,23 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
         vocab[i] = token.encode("utf-8")
 
 
+    # print("Reading file")
+    # with open(input_path, 'r') as file:
+    #     text = file.read()
+    # print("Pretokenizing Text")
+    # pretokenized_text = re.findall(PAT, text)
+    pretokenized_text = []
     print("Reading file")
     with open(input_path, 'r') as file:
-        text = file.read()
-    # print("removing special tokens")
-    # for 
-    # text.replace()
-    print("Pretokenizing Text")
-    pretokenized_text = re.findall(PAT, text)
+        print("Pretokenizing Text")
+        i = 0
+        while True:
+            print("chunk ", i)
+            chunk = file.read(CHUNK_SIZE)
+            if not chunk:
+                break
+            pretokenized_text += re.findall(PAT, chunk)
+            i += 1
 
     print("Counting tokens")
     token_counts = defaultdict(int)

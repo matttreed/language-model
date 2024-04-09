@@ -214,17 +214,18 @@ def run_transformer_block(
         FloatTensor of shape (batch_size, sequence_length, d_model) with the output of
         running the Transformer block on the input features.
     """
+    d_k = d_model // num_heads
     block = TransformerBlock(d_model, num_heads, d_ff, residual_pdrop, attn_pdrop)
     block.feed_forward.w1.weight.data = weights["ffn.w1.weight"]
     block.feed_forward.w2.weight.data = weights["ffn.w2.weight"]
     block.rms_norm_1.weight.data = weights["ln1.weight"]
     block.rms_norm_2.weight.data = weights["ln2.weight"]
-    # block.multi_head_attention.W_q.data = weights["attn.q_proj.weight"].reshape(num_heads, d_model // num_heads, d_model).transpose(1,2)
-    # block.multi_head_attention.W_k.data = weights["attn.k_proj.weight"].reshape(num_heads, d_model // num_heads, d_model).transpose(1,2)
-    # block.multi_head_attention.W_v.data = weights["attn.v_proj.weight"].reshape(num_heads, d_model // num_heads, d_model).transpose(1,2)
-    block.multi_head_attention.W_q.data = weights["attn.q_proj.weight"].reshape(d_model // num_heads, num_heads, d_model).permute(1,2,0)
-    block.multi_head_attention.W_k.data = weights["attn.k_proj.weight"].reshape(d_model // num_heads, num_heads, d_model).permute(1,2,0)
-    block.multi_head_attention.W_v.data = weights["attn.v_proj.weight"].reshape(d_model // num_heads, num_heads, d_model).permute(1,2,0)
+    block.multi_head_attention.W_q.data = weights["attn.q_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
+    block.multi_head_attention.W_k.data = weights["attn.k_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
+    block.multi_head_attention.W_v.data = weights["attn.v_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
+    # block.multi_head_attention.W_q.data = weights["attn.q_proj.weight"].reshape(d_model // num_heads, num_heads, d_model).permute(1,2,0)
+    # block.multi_head_attention.W_k.data = weights["attn.k_proj.weight"].reshape(d_model // num_heads, num_heads, d_model).permute(1,2,0)
+    # block.multi_head_attention.W_v.data = weights["attn.v_proj.weight"].reshape(d_model // num_heads, num_heads, d_model).permute(1,2,0)
     block.multi_head_attention.W_o.data = weights["attn.output_proj.weight"]
 
     return block(in_features)
