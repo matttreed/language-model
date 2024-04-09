@@ -87,9 +87,7 @@ class TransformerBlock(nn.Module):
         self.feed_forward = PositionWiseFeedForward(d_model, d_ff)
 
     def forward(self, x):
-        # x of shape (batch_size, seq_len, d_model)
         x = x + torch.nn.functional.dropout(self.multi_head_attention(self.rms_norm_1(x)), self.residual_pdrop)
-        # x = x + self.multi_head_attention(x_norm)
         x = x + torch.nn.functional.dropout(self.feed_forward(self.rms_norm_2(x)), self.residual_pdrop)
 
         return x

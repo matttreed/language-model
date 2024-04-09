@@ -109,23 +109,23 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
         vocab[i] = token.encode("utf-8")
 
 
-    # print("Reading file")
-    # with open(input_path, 'r') as file:
-    #     text = file.read()
-    # print("Pretokenizing Text")
-    # pretokenized_text = re.findall(PAT, text)
-    pretokenized_text = []
     print("Reading file")
     with open(input_path, 'r') as file:
-        print("Pretokenizing Text")
-        i = 0
-        while True:
-            print("chunk ", i)
-            chunk = file.read(CHUNK_SIZE)
-            if not chunk:
-                break
-            pretokenized_text += re.findall(PAT, chunk)
-            i += 1
+        text = file.read()
+    print("Pretokenizing Text")
+    pretokenized_text = re.findall(PAT, text)
+    # pretokenized_text = []
+    # print("Reading file")
+    # with open(input_path, 'r') as file:
+    #     print("Pretokenizing Text")
+    #     i = 0
+    #     while True:
+    #         print("chunk ", i)
+    #         chunk = file.read(CHUNK_SIZE)
+    #         if not chunk:
+    #             break
+    #         pretokenized_text += re.findall(PAT, chunk)
+    #         i += 1
 
     print("Counting tokens")
     token_counts = defaultdict(int)
@@ -217,7 +217,8 @@ def train_tokenizer_from_data():
     # data_path = "data/TinyStoriesV2-GPT4-train.txt"
     # vocab_filepath="cs336_basics/outputs/tiny_stories_vocab.json"
     # merges_filepath="cs336_basics/outputs/tiny_stories_merges.txt"
-    data_path = "data/owt_train.txt"
+    # data_path = "data/owt_train.txt"
+    data_path = "/data/owt_train_2G.txt"
     vocab_filepath="cs336_basics/outputs/owt_vocab.json"
     merges_filepath="cs336_basics/outputs/owt_merges.txt"
 
