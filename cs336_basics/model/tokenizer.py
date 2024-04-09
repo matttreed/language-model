@@ -10,6 +10,7 @@ import time
 from memory_profiler import memory_usage
 import psutil
 import os
+from cs336_basics.utils.helpers import gpt2_bytes_to_unicode
 
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 NUM_START_TOKENS = 256
@@ -40,8 +41,31 @@ class BPETokenizer(Tokenizer):
 
     @classmethod
     def from_files(cls, vocab_filepath, merges_filepath, special_tokens=None):
+        def encode_item_to_bytes(item):
+            # For byte escape sequences (e.g., "\\xf8"), convert them to actual bytes
+            RE = r"(\\x[0-9a-fA-F]{2})"
+            item_list = [string for string in re.split(RE, item) if len(string)]
+            b = b""
+            for item in item_list:
+                if item.startswith("\\x"):
+                    b += bytes([int(item[2:], 16)])
+                else:
+                    b += item.encode("utf-8")
+            return b
+        # def encode_item_to_bytes(item):
+        #     # For byte escape sequences (e.g., "\\xf8"), convert them to actual bytes
+        #     if item.startswith("\\x"):
+        #         # Remove the leading "\\x" and convert to a byte
+        #         print(item)
+        #         return bytes(int(item[2:], 16))
+        #     else:
+        #         # For regular characters and Unicode escape sequences, encode using UTF-8
+        #         return item.encode("utf-8")
         with open(vocab_filepath, 'r') as file:
-            vocab = {int(num): b.encode('utf-8') for b, num in json.load(file).items()}
+            vocab = {int(num): encode_item_to_bytes(b) for b, num in json.load(file).items()}
+            # TODO -> load as b"\xe2" instead of b"\\xe2"
+
+
         with open(merges_filepath, 'r') as file:
             merges: Dict[Tuple[int, int], int] = {}
             for line in file:
@@ -65,7 +89,7 @@ class BPETokenizer(Tokenizer):
             split_text: List[str] = [string for string in re.split(special_split, text) if len(string)] # get rid of empty strings
 
         pretokenized_text: List[List[bytes]] = [] # list of list of bytes. inner lists are mostly just individual bytes except special tokens which are already fully formed
-
+        # print(self.reverse_vocab)
         for t in split_text:
             if self.special_tokens and t in self.special_tokens:
                 pretokenized_text.append([self.reverse_vocab[t.encode("utf-8")]])
@@ -207,8 +231,16 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
 #     print(vocab)
 #     # print(merges[92:100])
 def save_bpe_params(params: BPETokenizerParams, vocab_filepath: str, merges_filepath: str):
+
     with open(vocab_filepath, 'w') as file:
-        json.dump({b.decode('utf-8', errors="backslashreplace"): num for num, b in params.vocab.items()}, file)
+        dictionary = {b.decode('utf-8', errors="backslashreplace"): num for num, b in params.vocab.items()}
+
+        json.dump(dictionary, file)
+        # json.dump({f"\u{b[0]:04x}": num for num, b in params.vocab.items()}, file)
+        # encoded_vocab = {f"\\u{b[0]:04x}": num for num, b in params.vocab.items()}
+        # with open(vocab_filepath, 'w', encoding='utf-8') as file:
+        # # Directly writing the string representation to avoid JSON's escaping
+        #     file.write(json.dumps(encoded_vocab))
     with open(merges_filepath, 'w') as file:
         for pair, new_index in params.merges.items():
             file.write(f"{pair[0]} {pair[1]} {new_index}\n")
@@ -218,9 +250,12 @@ def train_tokenizer_from_data():
     # vocab_filepath="cs336_basics/outputs/tiny_stories_vocab.json"
     # merges_filepath="cs336_basics/outputs/tiny_stories_merges.txt"
     # data_path = "data/owt_train.txt"
-    data_path = "/data/owt_train_2G.txt"
-    vocab_filepath="cs336_basics/outputs/owt_vocab.json"
-    merges_filepath="cs336_basics/outputs/owt_merges.txt"
+    # data_path = "/data/owt_train_2G.txt"
+    # vocab_filepath="cs336_basics/outputs/owt_vocab.json"
+    # merges_filepath="cs336_basics/outputs/owt_merges.txt"
+    data_path = "data/test.txt"
+    vocab_filepath="cs336_basics/outputs/test_vocab.json"
+    merges_filepath="cs336_basics/outputs/test_merges.txt"
 
     result = train_bpe(data_path, 32000, ["<|endoftext|>"])
     save_bpe_params(result, vocab_filepath, merges_filepath)
@@ -230,7 +265,7 @@ if __name__ == "__main__":
     process = psutil.Process(os.getpid())
     initial_memory = process.memory_info().rss / (1024 * 1024)
 
-    train_tokenizer_from_data()
+    # train_tokenizer_from_data()
 
     end_time = time.time()
     final_memory = process.memory_info().rss / (1024 * 1024)
@@ -240,6 +275,19 @@ if __name__ == "__main__":
 
     print("time_taken: ", time_taken)
     print("max_memory (MB): ", memory)
+    # train_tokenizer_from_data()
+    tokenizer = BPETokenizer.from_files("cs336_basics/outputs/tiny_stories_vocab.json", "cs336_basics/outputs/tiny_stories_merges.txt", ["<|endoftext|>"])
+    test = "ⵡ◌⫭∿⾯⬃⁙⦨⑄ⱗ⡇⽷⿷⍱␹⎸⛘⹷⩩<|endoftext|>Ⓟ⻉ⷤ⊘⡪▋ℤⷛ⑈≏◣ⴌ⡨⣭⾷⃘⍓ℶ ⹣◤⪧┊℻⊤⬣⛯⋦⢯<|endoftext|> <|endoftext|>⏀⽒⪤⸖ⴘ⍕⍽ⁿ⃮⼢≢⹭⠂≙⤯Ⅶ<|endoftext|><|endoftext|>⟀⌧⏓≋ⶴ⨖ⓧ⫚⪄⥠⌚⪙⟟␒⯅✴⸁⼱℡⴨⥶┺⣟✦ⲍ␞⫒⢣Ⳓ␕⦵⍟⸇▘⓹⧇"
+
+    # print(gpt2_bytes_to_unicode())
+
+    # print(list(tokenizer.params.vocab.items())[:300])
+    encoded = tokenizer.encode(test)
+    decoded = tokenizer.decode(encoded)
+    print(test)
+    print(decoded)
+    print(encoded)
+    print(test == decoded)
 
     # time_taken:  522.8188726902008
     # max_memory (MB):  47.75
