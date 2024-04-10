@@ -239,11 +239,11 @@ def run_transformer_block(
     block.rms_norm_2.weight.data = weights["ln2.weight"]
 
 
-    block.multi_head_attention.W_q.data = weights["attn.q_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
-    block.multi_head_attention.W_k.data = weights["attn.k_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
-    block.multi_head_attention.W_v.data = weights["attn.v_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
+    block.multi_head_attention.W_q.weight.data = weights["attn.q_proj.weight"]
+    block.multi_head_attention.W_k.weight.data = weights["attn.k_proj.weight"]
+    block.multi_head_attention.W_v.weight.data = weights["attn.v_proj.weight"]
 
-    block.multi_head_attention.W_o.data = weights["attn.output_proj.weight"]
+    block.multi_head_attention.W_o.weight.data = weights["attn.output_proj.weight"]
 
     return block(in_features)
 
@@ -344,10 +344,10 @@ def run_transformer_lm(
     transformer.positional_embeddings.data = weights["position_embeddings.weight"]
     d_k = d_model // num_heads
     for layer in range(num_layers):
-        transformer.blocks[layer].multi_head_attention.W_q.data = weights[f"layers.{layer}.attn.q_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
-        transformer.blocks[layer].multi_head_attention.W_k.data = weights[f"layers.{layer}.attn.k_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
-        transformer.blocks[layer].multi_head_attention.W_v.data = weights[f"layers.{layer}.attn.v_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
-        transformer.blocks[layer].multi_head_attention.W_o.data = weights[f"layers.{layer}.attn.output_proj.weight"]
+        transformer.blocks[layer].multi_head_attention.W_q.weight.data = weights[f"layers.{layer}.attn.q_proj.weight"]
+        transformer.blocks[layer].multi_head_attention.W_k.weight.data = weights[f"layers.{layer}.attn.k_proj.weight"]
+        transformer.blocks[layer].multi_head_attention.W_v.weight.data = weights[f"layers.{layer}.attn.v_proj.weight"]
+        transformer.blocks[layer].multi_head_attention.W_o.weight.data = weights[f"layers.{layer}.attn.output_proj.weight"]
         transformer.blocks[layer].rms_norm_1.weight.data = weights[f"layers.{layer}.ln1.weight"]
         transformer.blocks[layer].feed_forward.w1.weight.data = weights[f"layers.{layer}.ffn.w1.weight"]
         transformer.blocks[layer].feed_forward.w2.weight.data = weights[f"layers.{layer}.ffn.w2.weight"]
