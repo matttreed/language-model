@@ -9,6 +9,9 @@ import torch
 
 from cs336_basics.model.tokenizer import train_bpe, BPETokenizer, BPETokenizerParams
 from cs336_basics.model.layers import RMSNorm, GELU, PositionWiseFeedForward, scaledDotProductAttention, MultiHeadAttention, TransformerBlock
+from cs336_basics.model.transformer import Transformer
+from cs336_basics.model.functions import softmax, crossEntropyLoss, get_cosine_annealing_step_size, clip_gradient, get_batch
+from cs336_basics.training.optimizer import AdamW
 
 
 def run_positionwise_feedforward(
@@ -327,7 +330,25 @@ def run_transformer_lm(
         FloatTensor of shape (batch size, sequence_length, vocab_size) with the predicted unnormalized
         next-word distribution for each token.
     """
-    raise NotImplementedError
+    transformer = Transformer(vocab_size, context_length, num_layers, d_model, num_heads, d_ff, attn_pdrop, residual_pdrop)
+
+    transformer.token_embedding.weight.data = weights["token_embeddings.weight"]
+    transformer.positional_embeddings.data = weights["position_embeddings.weight"]
+    d_k = d_model // num_heads
+    for layer in range(num_layers):
+        transformer.blocks[layer].multi_head_attention.W_q.data = weights[f"layers.{layer}.attn.q_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
+        transformer.blocks[layer].multi_head_attention.W_k.data = weights[f"layers.{layer}.attn.k_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
+        transformer.blocks[layer].multi_head_attention.W_v.data = weights[f"layers.{layer}.attn.v_proj.weight"].view(num_heads, d_k, d_model).transpose(1,2)
+        transformer.blocks[layer].multi_head_attention.W_o.data = weights[f"layers.{layer}.attn.output_proj.weight"]
+        transformer.blocks[layer].rms_norm_1.weight.data = weights[f"layers.{layer}.ln1.weight"]
+        transformer.blocks[layer].feed_forward.w1.weight.data = weights[f"layers.{layer}.ffn.w1.weight"]
+        transformer.blocks[layer].feed_forward.w2.weight.data = weights[f"layers.{layer}.ffn.w2.weight"]
+        transformer.blocks[layer].rms_norm_2.weight.data = weights[f"layers.{layer}.ln2.weight"]
+
+    transformer.output_norm.weight.data = weights["ln_final.weight"]
+    transformer.output_proj.weight.data = weights["lm_head.weight"]
+
+    return transformer(in_indices)
 
 
 def run_rmsnorm(
@@ -404,7 +425,7 @@ def run_get_batch(
         is the sampled input sequences, and the second tuple item is the corresponding
         language modeling labels.
     """
-    raise NotImplementedError
+    return get_batch(dataset, batch_size, context_length, device)
 
 
 def run_softmax(in_features: torch.FloatTensor, dim: int) -> torch.FloatTensor:
@@ -421,7 +442,7 @@ def run_softmax(in_features: torch.FloatTensor, dim: int) -> torch.FloatTensor:
         FloatTensor of with the same shape as `in_features` with the output of
         softmax normalizing the specified `dim`.
     """
-    raise NotImplementedError
+    return softmax(in_features, dim)
 
 
 def run_cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
@@ -439,7 +460,7 @@ def run_cross_entropy(inputs: torch.FloatTensor, targets: torch.LongTensor):
     Returns:
         Tensor of shape () with the average cross-entropy loss across examples.
     """
-    raise NotImplementedError
+    return crossEntropyLoss(targets, inputs)
 
 
 def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm: float):
@@ -454,14 +475,14 @@ def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm:
     Returns:
         None
     """
-    raise NotImplementedError
+    clip_gradient(parameters, max_l2_norm)
 
 
 def get_adamw_cls() -> Type[torch.optim.Optimizer]:
     """
     Returns a torch.optim.Optimizer that implements AdamW.
     """
-    raise NotImplementedError
+    return AdamW
 
 
 def run_get_lr_cosine_schedule(
@@ -494,7 +515,7 @@ def run_get_lr_cosine_schedule(
     Returns:
         Learning rate at the given iteration under the specified schedule.
     """
-    raise NotImplementedError
+    return get_cosine_annealing_step_size(it, min_learning_rate, max_learning_rate, warmup_iters, cosine_cycle_iters)
 
 
 def run_save_checkpoint(

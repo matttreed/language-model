@@ -10,7 +10,6 @@ import time
 from memory_profiler import memory_usage
 import psutil
 import os
-from cs336_basics.utils.helpers import gpt2_bytes_to_unicode
 
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 NUM_START_TOKENS = 256
