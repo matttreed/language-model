@@ -10,7 +10,7 @@ import torch
 from cs336_basics.model.tokenizer import train_bpe, BPETokenizer, BPETokenizerParams
 from cs336_basics.model.layers import RMSNorm, GELU, PositionWiseFeedForward, scaledDotProductAttention, MultiHeadAttention, TransformerBlock
 from cs336_basics.model.transformer import Transformer
-from cs336_basics.model.functions import softmax, crossEntropyLoss, get_cosine_annealing_step_size, clip_gradient, get_batch
+from cs336_basics.model.util import softmax, crossEntropyLoss, get_cosine_annealing_step_size, clip_gradient, get_batch, load_checkpoint, save_checkpoint
 from cs336_basics.training.optimizer import AdamW
 
 
@@ -143,13 +143,21 @@ def run_multihead_self_attention(
         torch.FloatTensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    layer = MultiHeadAttention(d_model, num_heads, attn_pdrop)
-    for i in range(num_heads):
-        layer.W_q.data[i] = weights[f"q_heads.{i}.weight"].T
-        layer.W_k.data[i] = weights[f"k_heads.{i}.weight"].T
-        layer.W_v.data[i] = weights[f"v_heads.{i}.weight"].T
+    # layer = MultiHeadAttention(d_model, num_heads, attn_pdrop)
+    # for i in range(num_heads):
+    #     layer.W_q.data[i] = weights[f"q_heads.{i}.weight"].T
+    #     layer.W_k.data[i] = weights[f"k_heads.{i}.weight"].T
+    #     layer.W_v.data[i] = weights[f"v_heads.{i}.weight"].T
 
-    layer.W_o.data = weights["output_proj.weight"].T
+    # layer.W_o.data = weights["output_proj.weight"].T
+
+    # return None, layer(in_features)
+    layer = MultiHeadAttention(d_model, num_heads, attn_pdrop)
+    layer.W_q.weight.data = torch.cat([weights[f"q_heads.{i}.weight"] for i in range(num_heads)], dim=0)
+    layer.W_k.weight.data = torch.cat([weights[f"k_heads.{i}.weight"] for i in range(num_heads)], dim=0)
+    layer.W_v.weight.data = torch.cat([weights[f"v_heads.{i}.weight"] for i in range(num_heads)], dim=0)
+
+    layer.W_o.weight.data = weights["output_proj.weight"]
 
     return layer(in_features)
 
@@ -538,7 +546,7 @@ def run_save_checkpoint(
         out: str | os.PathLike | BinaryIO | IO[bytes]
             Path or file-like object to serialize the model, optimizer, and iteration to.
     """
-    raise NotImplementedError
+    save_checkpoint(model, optimizer, iteration, out)
 
 
 def run_load_checkpoint(
@@ -562,7 +570,7 @@ def run_load_checkpoint(
     Returns:
         int, the previously-serialized number of iterations.
     """
-    raise NotImplementedError
+    return load_checkpoint(src, model, optimizer)
 
 
 def get_tokenizer(

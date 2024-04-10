@@ -43,3 +43,11 @@ gunzip owt_valid.txt.gz
 cd ..
 ```
 
+
+
+unfortunately, i don't think there's anything we can do on our side to enable private forking---I think this is something that github just doesn't support (let me know if i'm wrong about that). The steps at https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274 should be suitable, though. In a nutshell:
+Make an empty private repo
+it should allow you to import code from another repo. do that and paste in the URL of the assignment.
+clone your new private repo locally to your desktop. e.g., if my repo is nfliu/a1 , git remote -v  after cloning would show one remote named "origin" pointing to nfliu/a1
+now, add a new remote for the upstream repository: git remote add upstream git@github.com:stanford-cs336/spring2024-assignment1-basics.git  (you may need to edit this command if you use HTTPS instead of SSH)
+at this point, if i have pushed a bunch of changes to my nfliu/a1  main branch, i can stack those changes on top of any changes that might come in on the upstream with git fetch upstream  followed by git rebase upstream/master . i expect that you won't need to solve many (if any) merge conflicts, since the changes we make are localized to test code that you probably aren't touching anyway.
