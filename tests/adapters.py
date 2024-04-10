@@ -7,11 +7,11 @@ from typing import IO, BinaryIO, Iterable, Optional, Type
 import numpy.typing as npt
 import torch
 
-from cs336_basics.model.tokenizer import train_bpe, BPETokenizer, BPETokenizerParams
-from cs336_basics.model.layers import RMSNorm, GELU, PositionWiseFeedForward, scaledDotProductAttention, MultiHeadAttention, TransformerBlock
-from cs336_basics.model.transformer import Transformer
-from cs336_basics.model.util import softmax, crossEntropyLoss, get_cosine_annealing_step_size, clip_gradient, get_batch, load_checkpoint, save_checkpoint
-from cs336_basics.training.optimizer import AdamW
+from src.tokenizer.tokenizer import train_bpe, BPETokenizer, BPETokenizerParams
+from src.model.layers import RMSNorm, GELU, PositionWiseFeedForward, scaledDotProductAttention, MultiHeadAttention, TransformerBlock
+from src.model.transformer import Transformer
+from src.model.util import softmax, crossEntropyLoss, get_cosine_annealing_step_size, clip_gradient, get_batch, load_checkpoint, save_checkpoint
+from src.training.optimizer import AdamW
 
 
 def run_positionwise_feedforward(

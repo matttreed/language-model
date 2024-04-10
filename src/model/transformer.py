@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from cs336_basics.model.layers import TransformerBlock, RMSNorm
+from src.model.layers import TransformerBlock, RMSNorm
 
 class Transformer(nn.Module):
     def __init__(self, vocab_size, context_length, num_layers, d_model, num_heads, d_ff, attn_pdrop, residual_pdrop):

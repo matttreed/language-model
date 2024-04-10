@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from abc import ABC
 import json
 import base64
-# from tqdm import tqdm
+from tqdm import tqdm
 import time
 from memory_profiler import memory_usage
 import psutil
@@ -99,7 +99,7 @@ class BPETokenizer(Tokenizer):
 
         inds: List[int] = [] # token numbers
 
-        for i, token in enumerate(pretokenized_text):
+        for i, token in tqdm(enumerate(pretokenized_text)):
             merges_to_perform = {} # index to order
             while True: # merging
                 for i in range(len(token) - 1): # find all merges

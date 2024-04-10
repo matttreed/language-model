@@ -3,8 +3,10 @@ import math
 import numpy as np
 import os
 import typing
+from src.configs.config import Config
+from src.tokenizer.tokenizer import BPETokenizer
 
-def softmax(x, dim=-1):
+def softmax(x, dim=-1, temperature=1.0):
     x -= x.max(dim=-1, keepdim=True)[0] # for numerical stability
     x = torch.exp(x)
     return x / x.sum(dim=-1, keepdim=True)
@@ -15,13 +17,13 @@ def crossEntropyLossUnstable(y, y_hat_logits): # y of shape (batch_size) y_hat_l
     neg_log_probs = - torch.log(true_class_probs)
     return torch.mean(neg_log_probs)
 
-def crossEntropyLoss(y, y_hat_logits): # y of shape (batch_size) y_hat_logits of shape (batch_size, vocab_size)
+def crossEntropyLoss(y, y_hat_logits): # y of shape (_, batch_size) y_hat_logits of shape (_, batch_size, vocab_size)
     y_hat_logits -= y_hat_logits.max(dim=-1, keepdim=True)[0] # for numerical stability
-    log_sum_exp = torch.log(torch.sum(torch.exp(y_hat_logits), dim=1))
-    true_class_logits = torch.gather(y_hat_logits, 1, y.unsqueeze(1)).squeeze(1)
+    log_sum_exp = torch.log(torch.sum(torch.exp(y_hat_logits), dim=-1))
+    true_class_logits = torch.gather(y_hat_logits, -1, y.unsqueeze(-1)).squeeze(-1)
 
     loss = log_sum_exp - true_class_logits
-    return torch.mean(loss)
+    return torch.mean(loss, dim=-1)
 
 def get_cosine_annealing_step_size(curr_iter, alpha_min, alpha_max, T_w, T_c):
     if curr_iter < T_w:
@@ -64,6 +66,13 @@ def save_checkpoint(model: torch.nn.Module,
                     out: str | os.PathLike | typing.BinaryIO | typing.IO[bytes]
                     ):
     
+    if isinstance(out, (str, os.PathLike)):
+        out_dir = os.path.dirname(out)
+        
+        if out_dir and not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+            print(f"Directory {out_dir} was created.")
+    
     checkpoint = {
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
@@ -75,11 +84,26 @@ def save_checkpoint(model: torch.nn.Module,
 def load_checkpoint(
         src: str | os.PathLike | typing.BinaryIO | typing.IO[bytes], 
         model: torch.nn.Module, 
-        optimizer: torch.optim.Optimizer
+        optimizer: torch.optim.Optimizer | None
         ):
     
     checkpoint = torch.load(src)
     model.load_state_dict(checkpoint['model_state_dict'])
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    if optimizer:
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     iteration = checkpoint['iteration']
     return iteration
+
+def load_model(model, optimizer, version, from_checkpoint_k):
+    path = f"src/checkpoints/version_{version}/chkpt_{str(from_checkpoint_k)}k.pth"
+    load_checkpoint(path, model, optimizer)
+
+def save_model(model, optimizer, version, iteration):
+    path = f"src/checkpoints/version_{version}/chkpt_{iteration // 1000}k.pth"
+    save_checkpoint(model, optimizer, iteration, path)
+
+def get_tokenizer(config: Config):
+    vocab_filepath = f"src/tokenizer/saved/{config.tokenizer.vocab_filename}"
+    merges_filepath = f"src/tokenizer/saved/{config.tokenizer.merges_filename}"
+    tokenizer = BPETokenizer.from_files(vocab_filepath, merges_filepath, config.tokenizer.special_tokens)
+    return tokenizer 

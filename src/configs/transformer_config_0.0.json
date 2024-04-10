@@ -1,0 +1,33 @@
+{
+    "name": "Test Config",
+    "description": "test",
+    "model": {
+        "d_model": 256,
+        "num_heads": 8,
+        "num_layers": 6,
+        "d_ff": 256,
+        "context_length": 16,
+        "attn_pdrop": 0.1,
+        "residual_pdrop": 0.1
+    },
+    "training": {
+        "batch_size": 8,
+        "num_iterations": 3000,
+        "lr": 0.0001,
+        "betas": [0.9, 0.98],
+        "eps": 1e-9,
+        "weight_decay": 0.1
+    },
+    "tokenizer": {
+        "vocab_size": 10000,
+        "merges_filename": "tiny_stories_merges.txt",
+        "vocab_filename": "tiny_stories_vocab.json",
+        "training_data": "TinyStoriesV2-GPT4-train.txt",
+        "special_tokens": ["<|endoftext|>"]
+    },
+    "data": {
+        "training_data": "test-train",
+        "validation_data": "test-valid"
+    },
+    "random_seed": 42
+}
