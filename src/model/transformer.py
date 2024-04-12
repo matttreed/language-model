@@ -14,7 +14,7 @@ class Transformer(nn.Module):
         self.d_ff = d_ff
         self.attn_pdrop = attn_pdrop
         self.residual_pdrop = residual_pdrop
-        self.positional_embeddings = nn.Parameter(torch.randn(context_length, d_model)) # TODO initialize properly
+        self.positional_embeddings = nn.Embedding(context_length, d_model) # TODO initialize properly
 
         self.token_embedding = nn.Embedding(vocab_size, d_model)
         self.blocks = nn.ModuleList(
@@ -29,7 +29,8 @@ class Transformer(nn.Module):
 
     def forward(self, x): # (batch_size, seq_len)
         seq_len = x.size(1)
-        x = nn.functional.dropout(self.token_embedding(x) + self.positional_embeddings[:seq_len], self.residual_pdrop)
+        positions = torch.arange(seq_len, device=x.device).unsqueeze(0)  # Generate positions tensor
+        x = nn.functional.dropout(self.token_embedding(x) + self.positional_embeddings(positions), self.residual_pdrop)
         
         for block in self.blocks:
             x = block(x)

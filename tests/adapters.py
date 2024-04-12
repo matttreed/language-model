@@ -341,7 +341,7 @@ def run_transformer_lm(
     transformer = Transformer(vocab_size, context_length, num_layers, d_model, num_heads, d_ff, attn_pdrop, residual_pdrop)
 
     transformer.token_embedding.weight.data = weights["token_embeddings.weight"]
-    transformer.positional_embeddings.data = weights["position_embeddings.weight"]
+    transformer.positional_embeddings.weight.data = weights["position_embeddings.weight"]
     d_k = d_model // num_heads
     for layer in range(num_layers):
         transformer.blocks[layer].multi_head_attention.W_q.weight.data = weights[f"layers.{layer}.attn.q_proj.weight"]

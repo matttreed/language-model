@@ -2,8 +2,8 @@
 #SBATCH --job-name=serialize_data
 #SBATCH --partition=batch
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
-#SBATCH --time=10:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --time=4:00:00
 #SBATCH --output=scripts/logs/serialize_data_%j.out
 #SBATCH --error=scripts/logs/serialize_data_%j.err
 #SBATCH --mem=100G
