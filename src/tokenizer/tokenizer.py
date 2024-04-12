@@ -80,7 +80,7 @@ class BPETokenizer(Tokenizer):
 
         pretokenized_text: List[List[bytes]] = [] # list of list of bytes. inner lists are mostly just individual bytes except special tokens which are already fully formed
         # print(self.reverse_vocab)
-        for t in split_text:
+        for t in tqdm(split_text, desc="Pretokenizing documents"):
             if self.special_tokens and t in self.special_tokens:
                 pretokenized_text.append([self.reverse_vocab[t.encode("utf-8")]])
             else:
@@ -90,7 +90,7 @@ class BPETokenizer(Tokenizer):
 
         inds: List[int] = [] # token numbers
 
-        for i, token in tqdm(enumerate(pretokenized_text)):
+        for token in tqdm(pretokenized_text, desc="Merging tokens"):
             merges_to_perform = {} # index to order
             while True: # merging
                 for i in range(len(token) - 1): # find all merges
@@ -226,20 +226,21 @@ def train_tokenizer_from_data():
     save_bpe_params(result, vocab_filepath, merges_filepath)
 
 if __name__ == "__main__":
-    start_time = time.time()
-    process = psutil.Process(os.getpid())
-    initial_memory = process.memory_info().rss / (1024 * 1024)
+    pass
+    # start_time = time.time()
+    # process = psutil.Process(os.getpid())
+    # initial_memory = process.memory_info().rss / (1024 * 1024)
 
-    train_tokenizer_from_data()
+    # # train_tokenizer_from_data()
 
-    end_time = time.time()
-    final_memory = process.memory_info().rss / (1024 * 1024)
+    # end_time = time.time()
+    # final_memory = process.memory_info().rss / (1024 * 1024)
 
-    time_taken = end_time - start_time
-    memory = final_memory - initial_memory
+    # time_taken = end_time - start_time
+    # memory = final_memory - initial_memory
 
-    print("time_taken: ", time_taken)
-    print("max_memory (MB): ", memory)
+    # print("time_taken: ", time_taken)
+    # print("max_memory (MB): ", memory)
     # train_tokenizer_from_data()
     # tokenizer = BPETokenizer.from_files("cs336_basics/outputs/tiny_stories_vocab.json", "cs336_basics/outputs/tiny_stories_merges.txt", ["<|endoftext|>"])
     # test = "ⵡ◌⫭∿⾯⬃⁙⦨⑄ⱗ⡇⽷⿷⍱␹⎸⛘⹷⩩<|endoftext|>Ⓟ⻉ⷤ⊘⡪▋ℤⷛ⑈≏◣ⴌ⡨⣭⾷⃘⍓ℶ ⹣◤⪧┊℻⊤⬣⛯⋦⢯<|endoftext|> <|endoftext|>⏀⽒⪤⸖ⴘ⍕⍽ⁿ⃮⼢≢⹭⠂≙⤯Ⅶ<|endoftext|><|endoftext|>⟀⌧⏓≋ⶴ⨖ⓧ⫚⪄⥠⌚⪙⟟␒⯅✴⸁⼱℡⴨⥶┺⣟✦ⲍ␞⫒⢣Ⳓ␕⦵⍟⸇▘⓹⧇"
