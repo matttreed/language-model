@@ -53,7 +53,7 @@ def get_batch(data, batch_size, context_length, device):
     samples = np.array([rand_sample() for _ in range(batch_size)]) # (batch_size, 2, context_length)
 
     try:
-        torch_samples = torch.tensor(samples, device=device).transpose(0,1) # (2, batch_size, context_length)
+        torch_samples = torch.tensor(samples, device=device, dtype=int).transpose(0,1) # (2, batch_size, context_length)
     except RuntimeError as e:
         print(f"Failed to create tensor on device {device}: {e}")
         raise

@@ -5,7 +5,7 @@ from src.model.util import crossEntropyLoss, load_model, get_batch, get_tokenize
 import torch
 import numpy as np
 
-def sample_from_model(version: str, from_checkpoint_k: int, max_tokens: int | None = 1000, temperature: float = 1.0, top_p: float = 0.9):
+def sample_from_model(prompt: str, version: str, from_checkpoint_k: int, max_tokens: int | None = 1000, temperature: float = 1.0, top_p: float = 0.9):
     config = Config(version)
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     model = Transformer(
@@ -23,9 +23,18 @@ def sample_from_model(version: str, from_checkpoint_k: int, max_tokens: int | No
 
     tokenizer = get_tokenizer(config)
 
-    test = "hello this is me doing a test and I will continue here "
-    test = torch.tensor(tokenizer.encode(test), device=device).unsqueeze(0)
+    
+    tokens = torch.tensor(tokenizer.encode(prompt), device=device).unsqueeze(0)
 
-    next_token_probs = softmax(model(test)[0, -1], temperature=temperature)
+    while tokens.shape[1] < max_tokens:
+        max_context_len = config.transformer.context_length
+        in_tokens = tokens
+        if tokens.shape[1] > max_context_len:
+            in_tokens = tokens[:, -max_context_len:]
+        next_token_probs = softmax(model(in_tokens)[0, -1], temperature=temperature)
+        next_token = torch.multinomial(next_token_probs, 1).item()
+        tokens = torch.cat((tokens, torch.tensor([[next_token]], device=device)), dim=1)
 
-    print(next_token_probs)
+    print(tokenizer.decode(tokens.squeeze(0).tolist()))
+
+

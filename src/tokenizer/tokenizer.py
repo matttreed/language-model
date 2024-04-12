@@ -11,7 +11,9 @@ from memory_profiler import memory_usage
 import psutil
 import os
 
-PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+# PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}{1,8}| ?\p{N}{1,8}| ?[^\s\p{L}\p{N}]{1,8}|\s{1,8}(?!\S)|\s+"""
+
 NUM_START_TOKENS = 256
 CHUNK_SIZE = 1000 * 1024 * 1024  # 1 GB
 
@@ -51,15 +53,7 @@ class BPETokenizer(Tokenizer):
                 else:
                     b += item.encode("utf-8")
             return b
-        # def encode_item_to_bytes(item):
-        #     # For byte escape sequences (e.g., "\\xf8"), convert them to actual bytes
-        #     if item.startswith("\\x"):
-        #         # Remove the leading "\\x" and convert to a byte
-        #         print(item)
-        #         return bytes(int(item[2:], 16))
-        #     else:
-        #         # For regular characters and Unicode escape sequences, encode using UTF-8
-        #         return item.encode("utf-8")
+
         with open(vocab_filepath, 'r') as file:
             vocab = {int(num): encode_item_to_bytes(b) for b, num in json.load(file).items()}
             # TODO -> load as b"\xe2" instead of b"\\xe2"
@@ -77,9 +71,6 @@ class BPETokenizer(Tokenizer):
         for text in iterable:
             for token_id in self.encode(text):
                 yield token_id
-        # Given an iterable of
-        # strings (e.g., a Python file handle), return a generator that lazily yields token IDs. This is required
-        # for memory-efficient tokenization of large files that we cannot directly load into memory.
 
     def encode(self, text: str) -> List[int]:
         split_text = [text]
@@ -135,47 +126,36 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
     print("Reading file")
     with open(input_path, 'r') as file:
         text = file.read()
-    print("Pretokenizing Text")
-    pretokenized_text = re.findall(PAT, text)
-    # pretokenized_text = []
-    # print("Reading file")
-    # with open(input_path, 'r') as file:
-    #     print("Pretokenizing Text")
-    #     i = 0
-    #     while True:
-    #         print("chunk ", i)
-    #         chunk = file.read(CHUNK_SIZE)
-    #         if not chunk:
-    #             break
-    #         pretokenized_text += re.findall(PAT, chunk)
-    #         i += 1
 
-    print("Counting tokens")
+    text_len = len(text)
+    print("Length of text:", text_len)
+    # pretokenized_text = re.findall(PAT, text)
+    pretokenized_text = []
+    with tqdm(total=text_len, desc="PreTokenizing") as pbar:
+        for pretoken in re.finditer(PAT, text):
+            string = pretoken.group()
+            pretokenized_text.append(string)
+            pbar.update(len(string))
+
     token_counts = defaultdict(int)
-    for token in pretokenized_text:
+    for token in tqdm(pretokenized_text, desc="Counting tokens"):
         token_ints = tuple(token.encode("utf-8"))
         token_counts[token_ints] += 1
 
-    print("Counting pairs")
     pairs = defaultdict(int)
-    for token, count in token_counts.items():
+    for token, count in tqdm(token_counts.items(), desc="Counting pairs"):
         for i in range(len(token) - 1):
             pair = token[i:i+2]
             pairs[pair] += count
 
-    print("Building Vocab")
+    pbar = tqdm(total=vocab_size - len(vocab), desc="Building Vocab")
     while len(vocab) < vocab_size:
-        if len(vocab) % 100 == 0:
-            print("Length of vocab: ", len(vocab))
+        pbar.update(1)
 
         if not pairs:
             break
 
-        def sort_function(pair):
-            return pairs[pair], str(vocab[pair[0]]) + str(vocab[pair[1]])
-        best_pair = max(pairs, key=sort_function) # (int, int)
-        # sorted_pairs_1 = sorted(pairs.items(), key=lambda x: (pairs[x], x), reverse=True)
-        # sorted_pairs = sorted(pairs.items(), key=sort_function, reverse=True)
+        best_pair = max(pairs, key=lambda pair: (pairs[pair], str(vocab[pair[0]]) + str(vocab[pair[1]]))) # (int, int)
 
         del pairs[best_pair]
         new_token_value = len(vocab)
@@ -215,20 +195,6 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
     return BPETokenizerParams(vocab=vocab, merges=merges)
 
 
-# if __name__ == "__main__":
-#     # vocab, merges = train_bpe("data/test.txt", 300, ["<|endoftext|>"])
-#     result = train_bpe("tests/fixtures/corpus.en", 500, ["<|endoftext|>"])
-#     # result = train_bpe("data/test.txt", 400, ["<|endoftext|>"])
-#     vocab = result.vocab
-#     merges = [tuple(vocab[b] for b in pair) for pair in result.merges.keys()]
-
-#     tokenizer = BPETokenizer(params=result, special_tokens=["<|endoftext|>"])
-#     test = tokenizer.encode("s")
-#     test_2 = tokenizer.decode(test)
-#     print(test, test_2)
-
-#     print(vocab)
-#     # print(merges[92:100])
 def save_bpe_params(params: BPETokenizerParams, vocab_filepath: str, merges_filepath: str):
 
     with open(vocab_filepath, 'w') as file:
@@ -245,16 +211,16 @@ def save_bpe_params(params: BPETokenizerParams, vocab_filepath: str, merges_file
             file.write(f"{pair[0]} {pair[1]} {new_index}\n")
 
 def train_tokenizer_from_data():
-    # data_path = "data/TinyStoriesV2-GPT4-train.txt"
-    # vocab_filepath="cs336_basics/outputs/tiny_stories_vocab.json"
-    # merges_filepath="cs336_basics/outputs/tiny_stories_merges.txt"
-    # data_path = "data/owt_train.txt"
+    # data_path = "data/raw/TinyStoriesV2-GPT4-train.txt"
+    # vocab_filepath="src/tokenizer/saved/tiny_stories_vocab.json"
+    # merges_filepath="src/tokenizer/saved/tiny_stories_merges.txt"
+    data_path = "data/raw/owt_train_2G.txt"
     # data_path = "/data/owt_train_2G.txt"
-    # vocab_filepath="cs336_basics/outputs/owt_vocab.json"
-    # merges_filepath="cs336_basics/outputs/owt_merges.txt"
-    data_path = "data/test.txt"
-    vocab_filepath="cs336_basics/outputs/test_vocab.json"
-    merges_filepath="cs336_basics/outputs/test_merges.txt"
+    vocab_filepath="src/tokenizer/saved/owt_vocab.json"
+    merges_filepath="src/tokenizer/saved/owt_merges.txt"
+    # data_path = "data/test.txt"
+    # vocab_filepath="cs336_basics/outputs/test_vocab.json"
+    # merges_filepath="cs336_basics/outputs/test_merges.txt"
 
     result = train_bpe(data_path, 32000, ["<|endoftext|>"])
     save_bpe_params(result, vocab_filepath, merges_filepath)
@@ -264,7 +230,7 @@ if __name__ == "__main__":
     process = psutil.Process(os.getpid())
     initial_memory = process.memory_info().rss / (1024 * 1024)
 
-    # train_tokenizer_from_data()
+    train_tokenizer_from_data()
 
     end_time = time.time()
     final_memory = process.memory_info().rss / (1024 * 1024)
@@ -275,18 +241,18 @@ if __name__ == "__main__":
     print("time_taken: ", time_taken)
     print("max_memory (MB): ", memory)
     # train_tokenizer_from_data()
-    tokenizer = BPETokenizer.from_files("cs336_basics/outputs/tiny_stories_vocab.json", "cs336_basics/outputs/tiny_stories_merges.txt", ["<|endoftext|>"])
-    test = "ⵡ◌⫭∿⾯⬃⁙⦨⑄ⱗ⡇⽷⿷⍱␹⎸⛘⹷⩩<|endoftext|>Ⓟ⻉ⷤ⊘⡪▋ℤⷛ⑈≏◣ⴌ⡨⣭⾷⃘⍓ℶ ⹣◤⪧┊℻⊤⬣⛯⋦⢯<|endoftext|> <|endoftext|>⏀⽒⪤⸖ⴘ⍕⍽ⁿ⃮⼢≢⹭⠂≙⤯Ⅶ<|endoftext|><|endoftext|>⟀⌧⏓≋ⶴ⨖ⓧ⫚⪄⥠⌚⪙⟟␒⯅✴⸁⼱℡⴨⥶┺⣟✦ⲍ␞⫒⢣Ⳓ␕⦵⍟⸇▘⓹⧇"
+    # tokenizer = BPETokenizer.from_files("cs336_basics/outputs/tiny_stories_vocab.json", "cs336_basics/outputs/tiny_stories_merges.txt", ["<|endoftext|>"])
+    # test = "ⵡ◌⫭∿⾯⬃⁙⦨⑄ⱗ⡇⽷⿷⍱␹⎸⛘⹷⩩<|endoftext|>Ⓟ⻉ⷤ⊘⡪▋ℤⷛ⑈≏◣ⴌ⡨⣭⾷⃘⍓ℶ ⹣◤⪧┊℻⊤⬣⛯⋦⢯<|endoftext|> <|endoftext|>⏀⽒⪤⸖ⴘ⍕⍽ⁿ⃮⼢≢⹭⠂≙⤯Ⅶ<|endoftext|><|endoftext|>⟀⌧⏓≋ⶴ⨖ⓧ⫚⪄⥠⌚⪙⟟␒⯅✴⸁⼱℡⴨⥶┺⣟✦ⲍ␞⫒⢣Ⳓ␕⦵⍟⸇▘⓹⧇"
 
     # print(gpt2_bytes_to_unicode())
 
     # print(list(tokenizer.params.vocab.items())[:300])
-    encoded = tokenizer.encode(test)
-    decoded = tokenizer.decode(encoded)
-    print(test)
-    print(decoded)
-    print(encoded)
-    print(test == decoded)
+    # encoded = tokenizer.encode(test)
+    # decoded = tokenizer.decode(encoded)
+    # print(test)
+    # print(decoded)
+    # print(encoded)
+    # print(test == decoded)
 
     # time_taken:  522.8188726902008
     # max_memory (MB):  47.75

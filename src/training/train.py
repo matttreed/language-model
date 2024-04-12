@@ -36,8 +36,8 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
 
     train_data_name = config.data.training_data
     valid_data_name = config.data.validation_data
-    train_data = np.memmap(f"data/processed/{train_data_name}.npy", dtype=np.int64, mode="r", offset=16*8)
-    valid_data = np.memmap(f"data/processed/{valid_data_name}.npy", dtype=np.int64, mode="r", offset=16*8)
+    train_data = np.memmap(f"data/processed/{train_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
+    valid_data = np.memmap(f"data/processed/{valid_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
 
     start_iteration = from_checkpoint_k * 1000 if from_checkpoint_k else 0
     for iteration in range(start_iteration, config.training.num_iterations):
