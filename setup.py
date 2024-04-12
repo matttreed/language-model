@@ -24,7 +24,7 @@ def read_requirements(path):
 
 setup(
     name="cs336_basics",
-    version=read("cs336_basics", "VERSION"),
+    version=read("src", "VERSION"),
     description="CS336: basics",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
