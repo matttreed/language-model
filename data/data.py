@@ -20,17 +20,17 @@ if __name__ == "__main__":
     # # data = serealize_data(tokenizer, 'data/raw/test.txt', 'data/processed/test.npy')
 
     print("TINY VALID")
-    data = serealize_data(tokenizer, 'data/raw/TinyStoriesV2-GPT4-valid.txt', 'data/processed/tiny_stories_valid.npy')
+    data = serealize_data(tokenizer, '/data/TinyStoriesV2-GPT4-valid.txt', 'data/processed/tiny_stories_valid.npy')
     print("TINY TRAIN")
-    data = serealize_data(tokenizer, 'data/raw/TinyStoriesV2-GPT4-train.txt', 'data/processed/tiny_stories_train.npy')
+    data = serealize_data(tokenizer, '/data/TinyStoriesV2-GPT4-train.txt', 'data/processed/tiny_stories_train.npy')
 
 
-    
+
     tokenizer = BPETokenizer.from_files("src/tokenizer/saved/owt_vocab.json", "src/tokenizer/saved/owt_merges.txt", ["<|endoftext|>"])
     print("OWT VALID")
-    data = serealize_data(tokenizer, 'data/raw/owt_valid.txt', 'data/processed/owt_valid.npy')
+    data = serealize_data(tokenizer, '/data/owt_valid.txt', 'data/processed/owt_valid.npy')
     print("OWT TRAIN")
-    data = serealize_data(tokenizer, 'data/raw/owt_train.txt', 'data/processed/owt_train.npy')
+    data = serealize_data(tokenizer, '/data/owt_train.txt', 'data/processed/owt_train.npy')
 
     # data = serealize_data(tokenizer, 'data/raw/test-train.txt', 'data/processed/test-train.npy')
     # print(len(open('data/raw/TinyStoriesV2-GPT4-train.txt', 'r').read().split(" ")))
