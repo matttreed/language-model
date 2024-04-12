@@ -7,8 +7,8 @@ import json
 import base64
 from tqdm import tqdm
 import time
-from memory_profiler import memory_usage
-import psutil
+# from memory_profiler import memory_usage
+# import psutil
 import os
 
 # PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
