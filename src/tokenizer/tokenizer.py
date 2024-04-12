@@ -11,8 +11,8 @@ import time
 # import psutil
 import os
 
-# PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
-PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}{1,8}| ?\p{N}{1,8}| ?[^\s\p{L}\p{N}]{1,8}|\s{1,8}(?!\S)|\s+"""
+PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+# PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}{1,8}| ?\p{N}{1,8}| ?[^\s\p{L}\p{N}]{1,8}|\s{1,8}(?!\S)|\s+"""
 
 NUM_START_TOKENS = 256
 CHUNK_SIZE = 1000 * 1024 * 1024  # 1 GB
@@ -191,7 +191,6 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]) -> (D
                     old_token = new_token
 
                 i += 1
-
     return BPETokenizerParams(vocab=vocab, merges=merges)
 
 
