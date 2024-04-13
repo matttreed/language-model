@@ -3,7 +3,7 @@
 #SBATCH --partition=batch
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --time=10:00:00
+#SBATCH --time=06:00:00
 #SBATCH --output=scripts/logs/serialize_data_%j.out
 #SBATCH --error=scripts/logs/serialize_data_%j.err
 #SBATCH --mem=100G
