@@ -80,7 +80,8 @@ class BPETokenizer(Tokenizer):
 
         pretokenized_text: List[List[bytes]] = [] # list of list of bytes. inner lists are mostly just individual bytes except special tokens which are already fully formed
         # print(self.reverse_vocab)
-        for t in tqdm(split_text, desc="Pretokenizing documents"):
+        # for t in tqdm(split_text, desc="Pretokenizing documents"):
+        for t in split_text:
             if self.special_tokens and t in self.special_tokens:
                 pretokenized_text.append([self.reverse_vocab[t.encode("utf-8")]])
             else:
@@ -90,7 +91,8 @@ class BPETokenizer(Tokenizer):
 
         inds: List[int] = [] # token numbers
 
-        for token in tqdm(pretokenized_text, desc="Merging tokens"):
+        # for token in tqdm(pretokenized_text, desc="Merging tokens"):
+        for token in pretokenized_text:
             merges_to_perform = {} # index to order
             while True: # merging
                 for i in range(len(token) - 1): # find all merges
