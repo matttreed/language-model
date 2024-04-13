@@ -66,7 +66,7 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
             log_validation_loss(iteration, model, valid_data, version, config, device)
 
         iteration += 1
-        tokens_processed = iteration * config.training.batch_size * config.transformer.context_length
+        tokens_processed = iteration * config.training.batch_size
         
         if iteration % config.training.checkpoint_every == 0:
             save_model(model, optimizer, version, iteration, config)
