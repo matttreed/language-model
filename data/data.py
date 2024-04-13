@@ -21,6 +21,7 @@ def serealize_data_iterator(tokenizer: BPETokenizer, data_path, save_path):
         iteration = 0
         for ind in tokenizer.encode_iterable(file):
             encoded.append(ind)
+            iteration += 1
             if iteration % 10000 == 0:
                 print(f"Iteration {iteration}, length {len(encoded)}")
         tokenized_data = np.array(encoded, dtype=np.int16)

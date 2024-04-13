@@ -42,6 +42,27 @@ gunzip owt_valid.txt.gz
 
 cd ..
 ```
+log in to head node
+ssh c-mattreed@ad12a3ca-hn.cloud.together.ai
+
+run debug interactive shell
+srun --partition=interactive --pty bash
+
+run cpu batch job 
+sbatch scripts/serialize_data.sh 
+
+monitor jobs
+squeue -u $USER
+
+cancel job
+scancel <jobid>
+
+
+Examples of flags you can pass to srun or put in your sbatch script:
+--gpus=1 to request a GPU
+--mem=50G to request 50GB of memory, or --mem=100G to request 100GB of memory
+--time=00:20:00 to request 20 minutes for your job.
+--cpus-per-task=8 to request 8 CPU cores.
 
 
 
