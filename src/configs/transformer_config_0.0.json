@@ -26,8 +26,8 @@
         "special_tokens": ["<|endoftext|>"]
     },
     "data": {
-        "training_data": "test-train",
-        "validation_data": "test-valid"
+        "training_data": "tiny_stories_valid",
+        "validation_data": "tiny_stories_valid"
     },
     "random_seed": 42
 }

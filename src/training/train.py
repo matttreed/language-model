@@ -1,7 +1,7 @@
 from src.configs.config import Config
 from src.model.transformer import Transformer
 from src.training.optimizer import AdamW
-from src.model.util import crossEntropyLoss, load_model, save_model, get_batch
+from src.model.util import crossEntropyLoss, load_model, save_model, get_batch, log_validation_loss, log
 import torch
 import numpy as np
 
@@ -40,6 +40,8 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
     valid_data = np.memmap(f"data/processed/{valid_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
 
     start_iteration = from_checkpoint_k * 1000 if from_checkpoint_k else 0
+
+    log(version, f"Training {version} from iteration {start_iteration}")
     for iteration in range(start_iteration, config.training.num_iterations):
         optimizer.zero_grad()
         x, y = get_batch(data=train_data,
@@ -53,7 +55,7 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
         optimizer.step()
 
         if iteration % 100 == 0:
-            print(f"Iteration {iteration}, Loss: {loss.item()}")
+            log_validation_loss(iteration, model, valid_data, version)
         
         if iteration % 1000 == 0:
             save_model(model, optimizer, version, iteration)

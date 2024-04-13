@@ -49,11 +49,11 @@ if __name__ == "__main__":
 
 
 
-    tokenizer = BPETokenizer.from_files("src/tokenizer/saved/owt_vocab.json", "src/tokenizer/saved/owt_merges.txt", ["<|endoftext|>"])
+    # tokenizer = BPETokenizer.from_files("src/tokenizer/saved/owt_vocab.json", "src/tokenizer/saved/owt_merges.txt", ["<|endoftext|>"])
     # print("OWT VALID")
     # data = serealize_data(tokenizer, '/data/owt_valid.txt', 'data/processed/owt_valid.npy')
     # print("OWT TRAIN")
-    data = serealize_data_iterator(tokenizer, '/data/owt_train.txt', 'data/processed/owt_train_second_half.npy')
+    # data = serealize_data_iterator(tokenizer, '/data/owt_train.txt', 'data/processed/owt_train_second_half.npy')
 
     # tokenizer = BPETokenizer.from_files("src/tokenizer/saved/tiny_stories_vocab.json", "src/tokenizer/saved/tiny_stories_merges.txt", ["<|endoftext|>"])
     # # # data = serealize_data(tokenizer, 'data/raw/test.txt', 'data/processed/test.npy')
@@ -61,7 +61,16 @@ if __name__ == "__main__":
     #     text = file.read()
     #     print(text)
 
-    # test_inds = np.load("data/processed/owt_train.npy")
+    owt = np.load("data/processed/owt_train.npy")
+    print(max(owt))
+    owt_valid = np.load("data/processed/owt_valid.npy")
+    print(max(owt_valid))
+    tiny = np.load("data/processed/tiny_stories_train.npy")
+    print(max(tiny))
+    tiny_valid = np.load("data/processed/tiny_stories_valid.npy")
+    print(max(tiny_valid))
+
+
     # print(test_inds.shape)
     # print(tokenizer.decode(test_inds))
     # print(len(tokenizer.decode(test_inds)), len(text))
@@ -73,3 +82,37 @@ if __name__ == "__main__":
 
     # data = serealize_data(tokenizer, 'data/raw/test-train.txt', 'data/processed/test-train.npy')
     # print(len(open('data/raw/TinyStoriesV2-GPT4-train.txt', 'r').read().split(" ")))
+
+
+
+
+
+    # first_half = np.load('data/processed/owt_train.npy')
+    # second_half = np.load('data/processed/owt_train_second_half.npy')
+
+
+
+
+
+    # tokenizer_owt = BPETokenizer.from_files("src/tokenizer/saved/owt_vocab.json", "src/tokenizer/saved/owt_merges.txt", ["<|endoftext|>"])
+    # tokenizer_tiny = BPETokenizer.from_files("src/tokenizer/saved/tiny_stories_vocab.json", "src/tokenizer/saved/tiny_stories_merges.txt", ["<|endoftext|>"])
+
+    # with open("data/raw/owt_10.txt") as file:
+    #     owt = file.read()
+
+    # with open("data/raw/tiny_10.txt") as file:
+    #     tiny = file.read()
+
+    # print("len owt bytes", len(owt.encode("utf-8")))
+    # print("len owt encoded owt", len(tokenizer_owt.encode(owt)))
+    # print("len owt encoded tiny", len(tokenizer_tiny.encode(owt)))
+
+    # print("len tiny bytes", len(tiny.encode("utf-8")))
+    # print("len tiny encoded owt", len(tokenizer_owt.encode(tiny)))
+    # print("len tiny encoded tiny", len(tokenizer_tiny.encode(tiny)))
+    # print(max(tokenizer_tiny.params.vocab.items(), key=lambda x: len(x[1])))
+
+    # with open("data/raw/TinyStoriesV2-GPT4-train.txt") as file:
+    #     owt = file.read()
+    #     print(len(owt.encode("utf-8")))
+    #     tokenizer_owt.encode(owt)

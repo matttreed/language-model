@@ -107,3 +107,12 @@ def get_tokenizer(config: Config):
     merges_filepath = f"src/tokenizer/saved/{config.tokenizer.merges_filename}"
     tokenizer = BPETokenizer.from_files(vocab_filepath, merges_filepath, config.tokenizer.special_tokens)
     return tokenizer 
+
+def log(version, text):
+    path = f"src/model/logs/loss_version_{version}.log"
+    print(text, file=open(path, "a"))
+
+def log_validation_loss(iteration, model, data, version):
+    path = f"src/model/logs/loss_version_{version}.log"
+    loss = torch.tensor(iteration)
+    print(f"Iteration {iteration}, Loss: {loss.item()}", file=open(path, "a"))
