@@ -30,8 +30,6 @@ class Transformer(nn.Module):
     def forward(self, x): # (batch_size, seq_len)
         seq_len = x.size(1)
         positions = torch.arange(seq_len, device=x.device).unsqueeze(0)  # Generate positions tensor
-        print(positions)
-        print(x)
         x = nn.functional.dropout(self.token_embedding(x) + self.positional_embeddings(positions), self.residual_pdrop)
         
         for block in self.blocks:

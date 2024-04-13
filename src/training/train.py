@@ -9,6 +9,8 @@ import numpy as np
 
 def train_model(version: str, from_checkpoint_k: int | None = None):
     config = Config(version)
+    torch.random.manual_seed(config.random_seed)
+    np.random.seed(config.random_seed)
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     model = Transformer(
         vocab_size=config.tokenizer.vocab_size,
@@ -25,10 +27,14 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
 
     optimizer = AdamW(
         params=model.parameters(), 
-        lr=config.training.lr,
         weight_decay=config.training.weight_decay,
         betas=config.training.betas,
-        eps=config.training.eps
+        eps=config.training.eps,
+        max_grad_norm=config.training.max_grad_norm,
+        alpha_min=config.training.alpha_min,
+        alpha_max=config.training.alpha_max,
+        T_warmup=config.training.T_warmup,
+        T_cosine=config.training.T_cosine
     )
 
     if from_checkpoint_k:
@@ -39,10 +45,11 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
     train_data = np.memmap(f"data/processed/{train_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
     valid_data = np.memmap(f"data/processed/{valid_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
 
-    start_iteration = from_checkpoint_k * 1000 if from_checkpoint_k else 0
+    iteration = from_checkpoint_k * 1000 if from_checkpoint_k else 0
+    tokens_processed = 0
 
-    log(version, f"Training {version} from iteration {start_iteration}")
-    for iteration in range(start_iteration, config.training.num_iterations):
+    log(version, f"Training {version} from iteration {iteration}")
+    while tokens_processed < config.training.total_tokens_processed:
         optimizer.zero_grad()
         x, y = get_batch(data=train_data,
                         batch_size=config.training.batch_size,
@@ -54,8 +61,13 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
 
         optimizer.step()
 
-        if iteration % 100 == 0:
-            log_validation_loss(iteration, model, valid_data, version)
+        iteration += 1
+        tokens_processed = config.training.batch_size * config.transformer.context_length
+
+        if iteration % config.training.log_every == 0:
+            log_validation_loss(iteration, model, valid_data, version, config, device)
         
-        if iteration % 1000 == 0:
-            save_model(model, optimizer, version, iteration)
+        if iteration % config.training.checkpoint_every == 0:
+            save_model(model, optimizer, version, iteration, config)
+
+    save_model(model, optimizer, version, iteration)

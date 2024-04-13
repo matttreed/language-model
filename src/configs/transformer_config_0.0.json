@@ -12,22 +12,28 @@
     },
     "training": {
         "batch_size": 8,
-        "num_iterations": 10000,
-        "lr": 0.0001,
+        "total_tokens_processed": 100000,
         "betas": [0.9, 0.98],
         "eps": 1e-9,
-        "weight_decay": 0.1
+        "alpha_min": 0.0001,
+        "alpha_max": 0.001,
+        "T_warmup": 1000,
+        "T_cosine": 10000,
+        "weight_decay": 0.1,
+        "max_grad_norm": 1.0,
+        "log_every": 100,
+        "checkpoint_every": 1000
     },
     "tokenizer": {
-        "vocab_size": 10000,
-        "merges_filename": "tiny_stories_merges.txt",
-        "vocab_filename": "tiny_stories_vocab.json",
+        "vocab_size": 32000,
+        "merges_filename": "owt_merges.txt",
+        "vocab_filename": "owt_vocab.json",
         "training_data": "TinyStoriesV2-GPT4-train.txt",
         "special_tokens": ["<|endoftext|>"]
     },
     "data": {
-        "training_data": "tiny_stories_valid",
-        "validation_data": "tiny_stories_valid"
+        "training_data": "owt_train",
+        "validation_data": "owt_train"
     },
     "random_seed": 42
 }

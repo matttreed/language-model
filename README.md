@@ -57,6 +57,8 @@ squeue -u $USER
 cancel job
 scancel <jobid>
 
+sacct -j 2174
+
 
 Examples of flags you can pass to srun or put in your sbatch script:
 --gpus=1 to request a GPU

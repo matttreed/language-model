@@ -39,13 +39,13 @@ def serealize_data_iterator(tokenizer: BPETokenizer, data_path, save_path):
 
 if __name__ == "__main__":
     
-    # tokenizer = BPETokenizer.from_files("src/tokenizer/saved/tiny_stories_vocab.json", "src/tokenizer/saved/tiny_stories_merges.txt", ["<|endoftext|>"])
-    # # # data = serealize_data(tokenizer, 'data/raw/test.txt', 'data/processed/test.npy')
+    tokenizer = BPETokenizer.from_files("src/tokenizer/saved/tiny_stories_vocab.json", "src/tokenizer/saved/tiny_stories_merges.txt", ["<|endoftext|>"])
+    # # data = serealize_data(tokenizer, 'data/raw/test.txt', 'data/processed/test.npy')
 
-    # # print("TINY VALID")
-    # # data = serealize_data(tokenizer, '/data/TinyStoriesV2-GPT4-valid.txt', 'data/processed/tiny_stories_valid.npy')
-    # print("TINY TRAIN")
-    # data = serealize_data(tokenizer, '/data/TinyStoriesV2-GPT4-train.txt', 'data/processed/tiny_stories_train.npy')
+    # print("TINY VALID")
+    # data = serealize_data(tokenizer, '/data/TinyStoriesV2-GPT4-valid.txt', 'data/processed/tiny_stories_valid.npy')
+    print("TINY TRAIN")
+    data = serealize_data(tokenizer, 'data/raw/TinyStoriesV2-GPT4-train.txt', 'data/processed/tiny_stories_train.npy')
 
 
 
@@ -61,14 +61,14 @@ if __name__ == "__main__":
     #     text = file.read()
     #     print(text)
 
-    owt = np.load("data/processed/owt_train.npy")
-    print(max(owt))
-    owt_valid = np.load("data/processed/owt_valid.npy")
-    print(max(owt_valid))
-    tiny = np.load("data/processed/tiny_stories_train.npy")
-    print(max(tiny))
-    tiny_valid = np.load("data/processed/tiny_stories_valid.npy")
-    print(max(tiny_valid))
+    # owt = np.load("data/processed/owt_train.npy")
+    # print(max(owt))
+    # owt_valid = np.load("data/processed/owt_valid.npy")
+    # print(max(owt_valid))
+    # tiny = np.load("data/processed/tiny_stories_train.npy")
+    # print(max(tiny))
+    # tiny_valid = np.load("data/processed/tiny_stories_valid.npy")
+    # print(max(tiny_valid))
 
 
     # print(test_inds.shape)

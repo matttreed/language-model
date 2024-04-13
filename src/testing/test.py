@@ -5,7 +5,7 @@ from src.model.util import crossEntropyLoss, load_model, get_batch, get_tokenize
 import torch
 import numpy as np
 
-def sample_from_model(prompt: str, version: str, from_checkpoint_k: int, max_tokens: int | None = 1000, temperature: float = 1.0, top_p: float = 0.9):
+def sample_from_model(prompt: str, version: str, from_checkpoint_k: int, max_tokens: int = 1000, temperature: float = 1.0, top_p: float | None = None):
     config = Config(version)
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     model = Transformer(
@@ -35,6 +35,6 @@ def sample_from_model(prompt: str, version: str, from_checkpoint_k: int, max_tok
         next_token = torch.multinomial(next_token_probs, 1).item()
         tokens = torch.cat((tokens, torch.tensor([[next_token]], device=device)), dim=1)
 
-    print(tokenizer.decode(tokens.squeeze(0).tolist()))
+    return tokenizer.decode(tokens.squeeze(0).tolist())
 
 

@@ -7,9 +7,9 @@ from src.configs.config import Config
 from src.tokenizer.tokenizer import BPETokenizer
 
 def softmax(x, dim=-1, temperature=1.0):
-    x -= x.max(dim=-1, keepdim=True)[0] # for numerical stability
-    x = torch.exp(x)
-    return x / x.sum(dim=-1, keepdim=True)
+    x -= x.max(dim=dim, keepdim=True)[0] # for numerical stability
+    x = torch.exp(x / temperature)
+    return x / x.sum(dim=dim, keepdim=True)
 
 def crossEntropyLossUnstable(y, y_hat_logits): # y of shape (batch_size) y_hat_logits of shape (batch_size, vocab_size)
     y_hat = softmax(y_hat_logits, dim=-1)
@@ -98,8 +98,9 @@ def load_model(model, optimizer, version, from_checkpoint_k):
     path = f"src/checkpoints/version_{version}/chkpt_{str(from_checkpoint_k)}k.pth"
     load_checkpoint(path, model, optimizer)
 
-def save_model(model, optimizer, version, iteration):
+def save_model(model, optimizer, version, iteration, config):
     path = f"src/checkpoints/version_{version}/chkpt_{iteration // 1000}k.pth"
+    log(version, f"Saving model at iteration: {iteration}, with tokens processed: {iteration * config.training.batch_size * config.transformer.context_length}")
     save_checkpoint(model, optimizer, iteration, path)
 
 def get_tokenizer(config: Config):
@@ -109,10 +110,12 @@ def get_tokenizer(config: Config):
     return tokenizer 
 
 def log(version, text):
-    path = f"src/model/logs/loss_version_{version}.log"
+    path = f"src/logs/loss_version_{version}.log"
     print(text, file=open(path, "a"))
 
-def log_validation_loss(iteration, model, data, version):
-    path = f"src/model/logs/loss_version_{version}.log"
-    loss = torch.tensor(iteration)
-    print(f"Iteration {iteration}, Loss: {loss.item()}", file=open(path, "a"))
+def log_validation_loss(iteration, model, data, version, config, device):
+    path = f"src/logs/loss_version_{version}.log"
+    x, y = get_batch(data, config.training.batch_size, config.transformer.context_length, device)
+    y_hat = model(x)
+    loss = crossEntropyLoss(y, y_hat).mean().item()
+    print(f"{iteration},{loss}", file=open(path, "a"))
