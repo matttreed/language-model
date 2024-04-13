@@ -1,5 +1,6 @@
 from src.tokenizer.tokenizer import BPETokenizer
 import numpy as np
+import os
 
 def serealize_data(tokenizer: BPETokenizer, data_path, save_path):
     print("Reading File")
@@ -14,19 +15,22 @@ def serealize_data(tokenizer: BPETokenizer, data_path, save_path):
 
 def serealize_data_iterator(tokenizer: BPETokenizer, data_path, save_path):
     print("Reading File")
+    file_size = os.path.getsize(data_path)  # Get the size of the file
+    halfway_point = file_size // 2
     with open(data_path, 'r') as file:
+        file.seek(halfway_point)
         # data = file.read()
         print("Tokenizing Data")
         encoded = []
         iteration = 0
         for ind in tokenizer.encode_iterable(file):
             encoded.append(ind)
-            iteration += 1
             if iteration % 100000000 == 0:
                 print(f"Saving Iteration {iteration}, length {len(encoded)}")
 
                 tokenized_data = np.array(encoded, dtype=np.int16)
                 np.save(save_path, tokenized_data)
+            iteration += 1
         tokenized_data = np.array(encoded, dtype=np.int16)
         print("Finished")
         np.save(save_path, tokenized_data)
@@ -49,7 +53,7 @@ if __name__ == "__main__":
     # print("OWT VALID")
     # data = serealize_data(tokenizer, '/data/owt_valid.txt', 'data/processed/owt_valid.npy')
     # print("OWT TRAIN")
-    data = serealize_data_iterator(tokenizer, '/data/owt_train.txt', 'data/processed/owt_train.npy')
+    data = serealize_data_iterator(tokenizer, '/data/owt_train.txt', 'data/processed/owt_train_second_half.npy')
 
     # tokenizer = BPETokenizer.from_files("src/tokenizer/saved/tiny_stories_vocab.json", "src/tokenizer/saved/tiny_stories_merges.txt", ["<|endoftext|>"])
     # # # data = serealize_data(tokenizer, 'data/raw/test.txt', 'data/processed/test.npy')
