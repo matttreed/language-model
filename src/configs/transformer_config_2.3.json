@@ -1,5 +1,5 @@
 {
-    "name": "Learning Rate Test",
+    "name": "Batch size Test",
     "description": "lr test",
     "model": {
         "d_model": 512,
