@@ -4,7 +4,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gpus=1
-#SBATCH --time=01:00:00
+#SBATCH --time=03:00:00
 #SBATCH --output=scripts/logs/train_model_%j.out
 #SBATCH --error=scripts/logs/train_model_%j.err
 #SBATCH --mem=100G
@@ -13,4 +13,7 @@
 eval "$(conda shell.bash hook)"
 conda activate cs336_basics
 
-python src/main.py --version 1.2 --train
+python src/main.py --version 2.0 --train
+python src/main.py --version 2.1 --train
+python src/main.py --version 2.2 --train
+python src/main.py --version 2.3 --train

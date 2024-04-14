@@ -5,6 +5,7 @@ import os
 import typing
 from src.configs.config import Config
 from src.tokenizer.tokenizer import BPETokenizer
+from datetime import datetime
 
 def softmax(x, dim=-1, temperature=1.0):
     x -= x.max(dim=dim, keepdim=True)[0] # for numerical stability
@@ -100,7 +101,7 @@ def load_model(model, optimizer, version, from_checkpoint_k):
 
 def save_model(model, optimizer, version, iteration, config):
     path = f"src/checkpoints/version_{version}/chkpt_{iteration // 1000}k.pth"
-    log(version, f"Saving model at iteration: {iteration}, with tokens processed: {iteration * config.training.batch_size * config.transformer.context_length}")
+    # log(version, f"Saving model at iteration: {iteration}, with tokens processed: {iteration * config.training.batch_size * config.transformer.context_length}")
     save_checkpoint(model, optimizer, iteration, path)
 
 def get_tokenizer(config: Config):
@@ -118,4 +119,5 @@ def log_validation_loss(iteration, model, data, version, config, device):
     x, y = get_batch(data, config.training.batch_size, config.transformer.context_length, device)
     y_hat = model(x)
     loss = crossEntropyLoss(y, y_hat).mean().item()
-    print(f"{iteration},{loss}", file=open(path, "a"))
+    time = datetime.now().timestamp()
+    print(f"{iteration},{time},{loss}", file=open(path, "a"))
