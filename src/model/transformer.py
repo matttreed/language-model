@@ -35,6 +35,6 @@ class Transformer(nn.Module):
         for block in self.blocks:
             x = block(x)
         
-        x = self.output_norm(x)
+        # x = self.output_norm(x)
         x = self.output_proj(x)
         return x
