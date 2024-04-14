@@ -13,4 +13,4 @@
 eval "$(conda shell.bash hook)"
 conda activate cs336_basics
 
-python src/main.py --version 3.1 --train
+python src/main.py --version 3.2 --train
