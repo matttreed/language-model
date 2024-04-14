@@ -11,8 +11,8 @@
         "residual_pdrop": 0.1
     },
     "training": {
-        "batch_size": 128,
-        "total_iterations": 20000,
+        "batch_size": 512,
+        "total_iterations": 10000,
         "betas": [0.9, 0.98],
         "eps": 1e-9,
         "alpha_min": 0.001,
@@ -25,7 +25,7 @@
         "checkpoint_every": 2000
     },
     "tokenizer": {
-        "vocab_size": 10000,
+        "vocab_size": 32000,
         "merges_filename": "owt_merges.txt",
         "vocab_filename": "owt_vocab.json",
         "training_data": "owt_train_2G.txt",
