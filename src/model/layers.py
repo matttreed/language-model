@@ -130,8 +130,8 @@ class TransformerBlock(nn.Module):
         # x = x + torch.nn.functional.dropout(self.multi_head_attention(self.rms_norm_1(x)), self.residual_pdrop)
         # x = x + torch.nn.functional.dropout(self.feed_forward(self.rms_norm_2(x)), self.residual_pdrop)
 
-        x = x + self.multi_head_attention(x), self.residual_pdrop
-        x = x + self.feed_forward(x), self.residual_pdrop
+        x = x + self.multi_head_attention(x)
+        x = x + self.feed_forward(x)
 
         # x = x + torch.nn.functional.dropout(self.multi_head_attention(self.rms_norm_1(x)) + self.feed_forward(self.rms_norm_2(x)), self.residual_pdrop)
 
