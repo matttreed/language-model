@@ -64,9 +64,9 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
         if iteration % config.training.log_every == 0:
             log_validation_loss(iteration, model, valid_data, version, config, device)
 
-        if iteration % config.training.checkpoint_every == 0:
+        if iteration != 0 and iteration % config.training.checkpoint_every == 0:
             save_model(model, optimizer, version, iteration, config)
-            
+
         iteration += 1
 
     save_model(model, optimizer, version, iteration, config)
