@@ -121,17 +121,20 @@ class TransformerBlock(nn.Module):
         self.residual_pdrop = residual_pdrop
         self.attn_pdrop = attn_pdrop
 
-        # self.rms_norm_1 = RMSNorm(d_model)
+        self.rms_norm_1 = RMSNorm(d_model)
         self.multi_head_attention = MultiHeadAttention(d_model, num_heads, attn_pdrop)
-        # self.rms_norm_2 = RMSNorm(d_model)
+        self.rms_norm_2 = RMSNorm(d_model)
         self.feed_forward = PositionWiseFeedForward(d_model, d_ff)
 
     def forward(self, x):
         # x = x + torch.nn.functional.dropout(self.multi_head_attention(self.rms_norm_1(x)), self.residual_pdrop)
         # x = x + torch.nn.functional.dropout(self.feed_forward(self.rms_norm_2(x)), self.residual_pdrop)
 
-        x = x + self.multi_head_attention(x)
-        x = x + self.feed_forward(x)
+        x = self.rms_norm_1(x + torch.nn.functional.dropout(self.multi_head_attention(x), self.residual_pdrop))
+        x = self.rms_norm_2(x + torch.nn.functional.dropout(self.feed_forward(x), self.residual_pdrop))
+
+        # x = x + self.multi_head_attention(x)
+        # x = x + self.feed_forward(x)
 
         # x = x + torch.nn.functional.dropout(self.multi_head_attention(self.rms_norm_1(x)) + self.feed_forward(self.rms_norm_2(x)), self.residual_pdrop)
 
