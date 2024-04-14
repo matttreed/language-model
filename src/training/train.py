@@ -46,10 +46,9 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
     valid_data = np.memmap(f"data/processed/{valid_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
 
     iteration = from_checkpoint_k * 1000 if from_checkpoint_k else 0
-    tokens_processed = 0
 
     log(version, f"Training {version} from iteration {iteration}")
-    while tokens_processed < config.training.total_tokens_processed:
+    while iteration < config.training.total_iterations:
         optimizer.zero_grad()
         x, y = get_batch(data=train_data,
                         batch_size=config.training.batch_size,
@@ -65,10 +64,9 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
         if iteration % config.training.log_every == 0:
             log_validation_loss(iteration, model, valid_data, version, config, device)
 
-        iteration += 1
-        tokens_processed = iteration * config.training.batch_size
-        
         if iteration % config.training.checkpoint_every == 0:
             save_model(model, optimizer, version, iteration, config)
+            
+        iteration += 1
 
     save_model(model, optimizer, version, iteration, config)

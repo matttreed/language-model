@@ -1,3 +1,4 @@
 /data/raw/*
 /data/processed/*
 /src/checkpoints/*/
+/src/logs

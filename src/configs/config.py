@@ -11,7 +11,7 @@ class TrainingConfig():
         self.T_warmup = json_data["training"]['T_warmup']
         self.T_cosine = json_data["training"]['T_cosine']
         self.batch_size = json_data["training"]["batch_size"]
-        self.total_tokens_processed = json_data["training"]["total_tokens_processed"]
+        self.total_iterations = json_data["training"]["total_iterations"]
         self.log_every = json_data["training"]["log_every"]
         self.checkpoint_every = json_data["training"]["checkpoint_every"]
         self.max_grad_norm = json_data["training"]["max_grad_norm"]
