@@ -3,3 +3,4 @@
 /src/checkpoints/*/
 /src/logs
 *.pyc
+*.log
