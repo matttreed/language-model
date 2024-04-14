@@ -121,9 +121,9 @@ class TransformerBlock(nn.Module):
         self.residual_pdrop = residual_pdrop
         self.attn_pdrop = attn_pdrop
 
-        self.rms_norm_1 = RMSNorm(d_model)
+        # self.rms_norm_1 = RMSNorm(d_model)
         self.multi_head_attention = MultiHeadAttention(d_model, num_heads, attn_pdrop)
-        self.rms_norm_2 = RMSNorm(d_model)
+        # self.rms_norm_2 = RMSNorm(d_model)
         self.feed_forward = PositionWiseFeedForward(d_model, d_ff)
 
     def forward(self, x):

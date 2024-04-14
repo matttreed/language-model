@@ -23,7 +23,7 @@ class Transformer(nn.Module):
                 for _ in range(num_layers)
             ]
         )
-        self.output_norm = RMSNorm(d_model)
+        # self.output_norm = RMSNorm(d_model)
         self.output_proj = nn.Linear(d_model, vocab_size, bias=False) # TODO, tie to embedding?
         # self.softmax = nn.Softmax(dim=-1)
 
