@@ -11,7 +11,7 @@
         "residual_pdrop": 0.1
     },
     "training": {
-        "batch_size": 256,
+        "batch_size": 128,
         "total_iterations": 20000,
         "betas": [0.9, 0.98],
         "eps": 1e-9,
