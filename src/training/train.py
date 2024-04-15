@@ -60,10 +60,8 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
 
         optimizer.step()
 
-
         if iteration % config.training.log_every == 0:
             log_validation_loss(iteration, model, valid_data, version, config, device)
-            log_validation_loss(iteration + 100000000, model, train_data, version, config, device)
 
         if iteration != 0 and iteration % config.training.checkpoint_every == 0:
             save_model(model, optimizer, version, iteration, config)

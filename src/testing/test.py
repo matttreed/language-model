@@ -38,3 +38,33 @@ def sample_from_model(prompt: str, version: str, from_checkpoint_k: int, max_tok
     return tokenizer.decode(tokens.squeeze(0).tolist())
 
 
+def evaluate_model(version, from_checkpoint_k):
+    config = Config(version)
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    model = Transformer(
+        vocab_size=config.tokenizer.vocab_size,
+        context_length=config.transformer.context_length,
+        num_layers=config.transformer.num_layers,
+        d_model=config.transformer.d_model,
+        num_heads=config.transformer.num_heads,
+        d_ff=config.transformer.d_ff,
+        attn_pdrop=config.transformer.attn_pdrop,
+        residual_pdrop=config.transformer.residual_pdrop
+    ).to(device)
+    model.eval()
+    load_model(model, None, version, from_checkpoint_k)
+
+    train_data_name = config.data.training_data
+    valid_data_name = config.data.validation_data
+    train_data = np.memmap(f"data/processed/{train_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
+    valid_data = np.memmap(f"data/processed/{valid_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
+
+    x, y = get_batch(train_data, 256, config.transformer.context_length, device) # TODO figure out batch size
+    y_hat = model(x)
+    train_loss = crossEntropyLoss(y, y_hat).mean().item()
+
+    x, y = get_batch(valid_data, 256, config.transformer.context_length, device) # TODO figure out batch size
+    y_hat = model(x)
+    valid_loss = crossEntropyLoss(y, y_hat).mean().item()
+
+    return train_loss, valid_loss
