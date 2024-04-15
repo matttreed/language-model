@@ -1,7 +1,8 @@
 {
-    "name": "OWT",
+    "name": "OWT Standard Transformer",
     "description": "",
     "model": {
+        "type": "transformer",
         "d_model": 512,
         "num_heads": 16,
         "num_layers": 4,

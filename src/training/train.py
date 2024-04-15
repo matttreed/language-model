@@ -1,7 +1,7 @@
 from src.configs.config import Config
 from src.model.transformer import Transformer
 from src.training.optimizer import AdamW
-from src.model.util import crossEntropyLoss, load_model, save_model, get_batch, log_validation_loss, log
+from src.model.util import crossEntropyLoss, load_model, save_model, get_batch, log_validation_loss, log, build_model
 import torch
 import numpy as np
 
@@ -12,16 +12,7 @@ def train_model(version: str, from_checkpoint_k: int | None = None):
     torch.random.manual_seed(config.random_seed)
     np.random.seed(config.random_seed)
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    model = Transformer(
-        vocab_size=config.tokenizer.vocab_size,
-        context_length=config.transformer.context_length,
-        num_layers=config.transformer.num_layers,
-        d_model=config.transformer.d_model,
-        num_heads=config.transformer.num_heads,
-        d_ff=config.transformer.d_ff,
-        attn_pdrop=config.transformer.attn_pdrop,
-        residual_pdrop=config.transformer.residual_pdrop
-    ).to(device)
+    model = build_model(config).to(device)
 
     model.train()
 

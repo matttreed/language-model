@@ -25,6 +25,7 @@ class TransformerConfig():
         self.d_ff = json_data["model"]['d_ff']
         self.attn_pdrop = json_data["model"]['attn_pdrop']
         self.residual_pdrop = json_data["model"]['residual_pdrop']
+        self.type = json_data["model"]["type"]
 
 class DataConfig():
     def __init__(self, json_data):

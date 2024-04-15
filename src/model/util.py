@@ -121,3 +121,29 @@ def log_validation_loss(iteration, model, data, version, config, device):
     loss = crossEntropyLoss(y, y_hat).mean().item()
     time = datetime.now().timestamp()
     print(f"{iteration},{time},{loss}", file=open(path, "a"))
+
+def build_model(config: Config):
+    from src.model.transformer import Transformer, Optimus_Prime
+
+    if config.transformer.type == "transformer":
+        return Transformer(
+            vocab_size=config.tokenizer.vocab_size,
+            context_length=config.transformer.context_length,
+            num_layers=config.transformer.num_layers,
+            d_transformer=config.transformer.d_model,
+            num_heads=config.transformer.num_heads,
+            d_ff=config.transformer.d_ff,
+            attn_pdrop=config.transformer.attn_pdrop,
+            residual_pdrop=config.transformer.residual_pdrop
+        )
+    elif config.transformer.type == "optimus":
+        return Optimus_Prime(
+            vocab_size=config.tokenizer.vocab_size,
+            context_length=config.transformer.context_length,
+            num_layers=config.transformer.num_layers,
+            d_model=config.transformer.d_model,
+            num_heads=config.transformer.num_heads,
+            d_ff=config.transformer.d_ff,
+            attn_pdrop=config.transformer.attn_pdrop,
+            residual_pdrop=config.transformer.residual_pdrop
+        )
