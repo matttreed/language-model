@@ -14,7 +14,7 @@ class Transformer(nn.Module):
         self.d_ff = d_ff
         self.attn_pdrop = attn_pdrop
         self.residual_pdrop = residual_pdrop
-        self.positional_embeddings = nn.Embedding(context_length, d_model) # TODO initialize properly
+        self.positional_embeddings = nn.Embedding(context_length, d_model)
 
         self.token_embedding = nn.Embedding(vocab_size, d_model)
         self.blocks = nn.ModuleList(
@@ -61,6 +61,7 @@ class Optimus_Prime(nn.Module):
         )
         self.output_norm = RMSNorm(d_model)
         self.output_proj = nn.Linear(d_model, vocab_size, bias=False) # TODO, tie to embedding?
+        self.output_proj.weight = self.token_embedding.weight
         # self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, x): # (batch_size, seq_len)
