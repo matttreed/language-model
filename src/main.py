@@ -13,6 +13,7 @@ def main():
     parser.add_argument('--max_tokens', type=int, default=300, help='Load model from checkpoint k.')
     parser.add_argument('--temperature', type=float, default=1.0, help='Temperature for sampling.')
     parser.add_argument('--top_p', type=float, default=None, help='Use Top-p sampling for generation.')
+    parser.add_argument('--skip_end_token', action='store_true', help='Skips the end token when generating text.')
     args = parser.parse_args()
 
     if args.train:
@@ -25,7 +26,8 @@ def main():
             from_checkpoint_k=args.checkpoint_k,
             max_tokens=args.max_tokens,
             temperature=args.temperature,
-            top_p=args.top_p
+            top_p=args.top_p,
+            stop_at_stop_token=not args.skip_end_token
             )
         
         print(text)
