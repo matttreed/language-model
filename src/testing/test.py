@@ -32,6 +32,21 @@ def sample_from_model(prompt: str, version: str, from_checkpoint_k: int, max_tok
         if tokens.shape[1] > max_context_len:
             in_tokens = tokens[:, -max_context_len:]
         next_token_probs = softmax(model(in_tokens)[0, -1], temperature=temperature)
+
+        if top_p is not None:
+            sorted_probs, sorted_indices = torch.sort(next_token_probs, descending=True)
+            cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+            selected_indices = cumulative_probs <= top_p
+            selected_indices[0] = True
+            indices = sorted_indices[selected_indices] # shape (num_inds)
+
+            mask = torch.ones(config.tokenizer.vocab_size, dtype=torch.bool, device=device)
+            mask[indices] = False
+
+            next_token_probs = next_token_probs.masked_fill(mask, 0)
+            next_token_probs /= next_token_probs.sum()
+
+
         next_token = torch.multinomial(next_token_probs, 1).item()
         tokens = torch.cat((tokens, torch.tensor([[next_token]], device=device)), dim=1)
 

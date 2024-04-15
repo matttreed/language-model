@@ -12,7 +12,7 @@ def main():
     parser.add_argument('--prompt', type=str, default="You are a helpful assistant. continue from here.", help='Prompt to generate text from.')
     parser.add_argument('--max_tokens', type=int, default=300, help='Load model from checkpoint k.')
     parser.add_argument('--temperature', type=float, default=1.0, help='Temperature for sampling.')
-    parser.add_argument('--top_p', type=int, default=None, help='Use Top-p sampling for generation.')
+    parser.add_argument('--top_p', type=float, default=None, help='Use Top-p sampling for generation.')
     args = parser.parse_args()
 
     if args.train:
