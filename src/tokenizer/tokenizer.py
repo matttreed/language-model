@@ -56,7 +56,6 @@ class BPETokenizer(Tokenizer):
 
         with open(vocab_filepath, 'r') as file:
             vocab = {int(num): encode_item_to_bytes(b) for b, num in json.load(file).items()}
-            # TODO -> load as b"\xe2" instead of b"\\xe2"
 
 
         with open(merges_filepath, 'r') as file:

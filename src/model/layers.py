@@ -80,7 +80,7 @@ class MultiHeadAttention(nn.Module):
         k = self.W_k(x).view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
         v = self.W_v(x).view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
 
-        mask = ~torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool().to(x.device) # TODO make a buffer
+        mask = ~torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool().to(x.device)
         x = scaledDotProductAttention(q, k, v, mask, self.attn_pdrop)
         
         x = x.transpose(1, 2) # shape (batch_size,seq_len, num_heads, d_v)

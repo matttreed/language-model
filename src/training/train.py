@@ -5,8 +5,6 @@ from src.model.util import crossEntropyLoss, load_model, save_model, get_batch, 
 import torch
 import numpy as np
 
-# TODO use gradient clipping and cosine ennealing
-
 def train_model(version: str, from_checkpoint_k: int | None = None):
     config = Config(version)
     torch.random.manual_seed(config.random_seed)

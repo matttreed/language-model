@@ -116,7 +116,7 @@ def log(version, text):
 
 def log_validation_loss(iteration, model, data, version, config, device):
     path = f"src/logs/loss_version_{version}.log"
-    x, y = get_batch(data, 256, config.transformer.context_length, device) # TODO figure out batch size
+    x, y = get_batch(data, 256, config.transformer.context_length, device)
     y_hat = model(x)
     loss = crossEntropyLoss(y, y_hat).mean().item()
     time = datetime.now().timestamp()

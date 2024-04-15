@@ -60,11 +60,11 @@ def evaluate_model(version, from_checkpoint_k):
     train_data = np.memmap(f"data/processed/{train_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
     valid_data = np.memmap(f"data/processed/{valid_data_name}.npy", dtype=np.int16, mode="r", offset=16*8)
 
-    x, y = get_batch(train_data, 256, config.transformer.context_length, device) # TODO figure out batch size
+    x, y = get_batch(train_data, 256, config.transformer.context_length, device)
     y_hat = model(x)
     train_loss = crossEntropyLoss(y, y_hat).mean().item()
 
-    x, y = get_batch(valid_data, 256, config.transformer.context_length, device) # TODO figure out batch size
+    x, y = get_batch(valid_data, 256, config.transformer.context_length, device)
     y_hat = model(x)
     valid_loss = crossEntropyLoss(y, y_hat).mean().item()
 
