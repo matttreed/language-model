@@ -130,7 +130,7 @@ def build_model(config: Config):
             vocab_size=config.tokenizer.vocab_size,
             context_length=config.transformer.context_length,
             num_layers=config.transformer.num_layers,
-            d_transformer=config.transformer.d_model,
+            d_model=config.transformer.d_model,
             num_heads=config.transformer.num_heads,
             d_ff=config.transformer.d_ff,
             attn_pdrop=config.transformer.attn_pdrop,
