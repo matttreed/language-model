@@ -1,0 +1,40 @@
+{
+    "name": "OWT Standard Transformer",
+    "description": "",
+    "model": {
+        "type": "transformer",
+        "d_model": 512,
+        "num_heads": 16,
+        "num_layers": 4,
+        "d_ff": 2048,
+        "context_length": 256,
+        "attn_pdrop": 0.1,
+        "residual_pdrop": 0.1
+    },
+    "training": {
+        "batch_size": 256,
+        "total_iterations": 10000,
+        "betas": [0.9, 0.98],
+        "eps": 1e-9,
+        "alpha_min": 0.001,
+        "alpha_max": 0.01,
+        "T_warmup": 500,
+        "T_cosine": 6000,
+        "weight_decay": 0.01,
+        "max_grad_norm": 1.0,
+        "log_every": 20,
+        "checkpoint_every": 2000
+    },
+    "tokenizer": {
+        "vocab_size": 32000,
+        "merges_filename": "owt_merges.txt",
+        "vocab_filename": "owt_vocab.json",
+        "training_data": "owt_train_2G.txt",
+        "special_tokens": ["<|endoftext|>"]
+    },
+    "data": {
+        "training_data": "owt_train",
+        "validation_data": "owt_valid"
+    },
+    "random_seed": 42
+}
